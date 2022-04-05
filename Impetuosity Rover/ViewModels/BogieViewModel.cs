@@ -7,13 +7,11 @@ using System.Text;
 
 namespace Impetuosity_Rover.ViewModels
 {
-    public class BogieViewModel
+    public class BogieViewModel : ValleyBaseViewModel
     {
         IPwmPort _steeringPort;
-
         Servo _servo;
-
-        double _position = 90;
+        double _position;
 
         public BogieViewModel() : base()
         {
@@ -26,13 +24,14 @@ namespace Impetuosity_Rover.ViewModels
 
             try
             {
-
                 _steeringPort = bus.CreatePwmPort(Convert.ToByte(servoPortIndex));
                 _servo = new Servo(_steeringPort, servoConfig);
+                Position = 90;
                 result = true;
             }
             catch (Exception ex)
             {
+                ShowDebugMessage("Error: " + ex.Message, true);
                 result = false;
             }
 

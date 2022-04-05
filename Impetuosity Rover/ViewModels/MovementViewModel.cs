@@ -61,7 +61,7 @@ namespace Impetuosity_Rover.ViewModels
         public void Test()
         {
             bool success = true;
-            ShowDebugMessage("Dubstep, baby. ");
+            ShowDebugMessage("Shuffle, baby. "); //Play dubstep here
 
             while (success)
             {
@@ -71,15 +71,15 @@ namespace Impetuosity_Rover.ViewModels
 
                     while (outer > 0)
                     {
-                        TurnAllToEngle(0);
-                        TurnAllToEngle(90);
-                        TurnAllToEngle(0);
-                        TurnAllToEngle(90);
+                        TurnAllToAngle(0);
+                        TurnAllToAngle(90);
+                        TurnAllToAngle(0);
+                        TurnAllToAngle(90);
 
-                        TurnAllToEngle(180);
-                        TurnAllToEngle(90);
-                        TurnAllToEngle(0);
-                        TurnAllToEngle(180);
+                        TurnAllToAngle(180);
+                        TurnAllToAngle(90);
+                        TurnAllToAngle(0);
+                        TurnAllToAngle(180);
 
                         outer--;
                     }
@@ -90,8 +90,8 @@ namespace Impetuosity_Rover.ViewModels
                         int wiggle = 5;
                         while (wiggle > 0)
                         {
-                            TurnAllToEngle(70, TimeSpan.FromTicks(250));
-                            TurnAllToEngle(110, TimeSpan.FromTicks(250));
+                            TurnAllToAngle(70, TimeSpan.FromTicks(250));
+                            TurnAllToAngle(110, TimeSpan.FromTicks(250));
                             wiggle--;
                         }
 
@@ -109,12 +109,12 @@ namespace Impetuosity_Rover.ViewModels
             }
         }
 
-        private void TurnAllToEngle(double desiredAngleInDegrees)
+        private void TurnAllToAngle(double desiredAngleInDegrees)
         {
-            TurnAllToEngle(desiredAngleInDegrees, TimeSpan.FromMilliseconds(500));
+            TurnAllToAngle(desiredAngleInDegrees, TimeSpan.FromMilliseconds(500));
         }
 
-        private void TurnAllToEngle(double desiredAngleInDegrees, TimeSpan PauseAfterMovement)
+        private void TurnAllToAngle(double desiredAngleInDegrees, TimeSpan PauseAfterMovement)
         {
 
             MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Yellow);

@@ -11,7 +11,7 @@ namespace Impetuosity_Rover.ViewModels
     {
         public RgbPwmLed onboardLed;
 
-        MovementViewModel Movement;
+        private MovementViewModel Movement;
 
         private Pca9685 pca9685;
         private II2cBus i2CBus;
