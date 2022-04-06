@@ -52,13 +52,14 @@ namespace Impetuosity_Rover.ViewModels
             rightFrontBogie.Init(bus, 0, SG51Conf);
             rightRearBogie.Init(bus, 1, SG51Conf);
 
+            ShowDebugMessage("Init Drive Motor Power");
             leftMotorPower = new DrivePowerViewModel();
             leftMotorPower.Init();
             rightMotorPower = new DrivePowerViewModel();
             rightMotorPower.Init();
         }
 
-        public void Test()
+        public void TestBogies()
         {
             bool success = true;
             ShowDebugMessage("Shuffle, baby. "); //Play dubstep here
