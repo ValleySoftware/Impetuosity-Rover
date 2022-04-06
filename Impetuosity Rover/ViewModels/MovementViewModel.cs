@@ -14,13 +14,13 @@ namespace Impetuosity_Rover.ViewModels
     public class MovementViewModel : ValleyBaseViewModel
     {
 
-        BogieViewModel leftFrontBogie;
-        BogieViewModel leftRearBogie;
-        BogieViewModel rightFrontBogie;
-        BogieViewModel rightRearBogie;
-
-        DrivePowerViewModel leftMotorPower;
-        DrivePowerViewModel rightMotorPower;
+        private BogieViewModel leftFrontBogie;
+        private BogieViewModel leftRearBogie;
+        private BogieViewModel rightFrontBogie;
+        private BogieViewModel rightRearBogie;
+        
+        private DrivePowerViewModel leftMotorPower;
+        private DrivePowerViewModel rightMotorPower;
 
         public MovementViewModel() :base()
         {
@@ -54,9 +54,58 @@ namespace Impetuosity_Rover.ViewModels
 
             ShowDebugMessage("Init Drive Motor Power");
             leftMotorPower = new DrivePowerViewModel();
-            leftMotorPower.Init();
+            leftMotorPower.Init(_device.Pins.D13, _device.Pins.D12, _device.Pins.D11);
             rightMotorPower = new DrivePowerViewModel();
-            rightMotorPower.Init();
+            rightMotorPower.Init(_device.Pins.D02, _device.Pins.D03, _device.Pins.D04);
+        }
+
+        public void SetMotorPower(float leftPower, float rightPower) 
+        {
+            leftMotorPower.SetMotorPower(leftPower);
+            rightMotorPower.SetMotorPower(rightPower);
+        }
+
+        public void Stop()
+        {
+            leftMotorPower.Stop();
+            rightMotorPower.Stop();
+        }
+
+        //with angle of 0 indicating straight ahead.
+        //Reccommend staying between -70 and +70
+        public void TurnBogiesTo(double angle)
+        {
+            TurnFrontBogiesTo(angle);
+            TurnRearBogiesTo(angle * -1);
+        }
+
+        public void TurnBogiesBy(double amountToChangeAngleBy)
+        {
+            TurnFrontBogiesTo(leftFrontBogie.Position + amountToChangeAngleBy);
+            TurnRearBogiesTo(leftFrontBogie.Position + amountToChangeAngleBy );
+        }
+
+        private void TurnFrontBogiesTo(double angle)
+        {
+            leftFrontBogie.Position = angle;
+            rightFrontBogie.Position = angle;
+        }
+
+        private void TurnRearBogiesTo(double angle)
+        {
+            leftRearBogie.Position = angle;
+            rightRearBogie.Position = angle;
+        }
+
+        public void TestPower()
+        {
+            SetMotorPower(50, 50);
+            Thread.Sleep(TimeSpan.FromSeconds(1));
+            SetMotorPower(0, 0);
+            Thread.Sleep(TimeSpan.FromSeconds(1));
+            SetMotorPower(-50, -50);
+            Thread.Sleep(TimeSpan.FromSeconds(1));
+            SetMotorPower(0, 0);
         }
 
         public void TestBogies()

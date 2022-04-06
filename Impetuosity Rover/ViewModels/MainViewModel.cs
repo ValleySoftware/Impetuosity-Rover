@@ -57,6 +57,7 @@ namespace Impetuosity_Rover.ViewModels
 
                 var t = new Task(() =>
                 {
+                    Movement.TestPower();
                     Movement.TestBogies();
                 });
 

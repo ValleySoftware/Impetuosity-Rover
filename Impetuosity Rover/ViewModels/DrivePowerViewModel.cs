@@ -8,8 +8,6 @@ namespace Impetuosity_Rover.ViewModels
     public class DrivePowerViewModel : ValleyBaseViewModel
     {
         private HBridgeMotor _hBridge;
-        private bool _reverseMotorOrientation = false;
-        private int _reverseMotorOrientationMultiplier = 1; //This is changed in the public property if the motor controller is backwards.
         bool _stopRequested = false;
 
         public DrivePowerViewModel() : base()
@@ -30,8 +28,6 @@ namespace Impetuosity_Rover.ViewModels
 
                 _hBridge.IsNeutral = true;
 
-                ReverseMotorOrientation = false;
-
                 result = true;
             }
             catch (Exception ex)
@@ -47,23 +43,6 @@ namespace Impetuosity_Rover.ViewModels
         {
             _stopRequested = false;
             _hBridge.Power = power;
-        }
-
-        public bool ReverseMotorOrientation
-        {
-            get => _reverseMotorOrientation;
-            set
-            {
-                _reverseMotorOrientation = value;
-                if (value)
-                {
-                    _reverseMotorOrientationMultiplier = -1;
-                }
-                else
-                {
-                    _reverseMotorOrientationMultiplier = 1;
-                }
-            }
         }
 
         public void Stop()
