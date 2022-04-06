@@ -56,7 +56,7 @@ namespace Impetuosity_Rover.ViewModels
             leftMotorPower = new DrivePowerViewModel();
             leftMotorPower.Init(_device.Pins.D13, _device.Pins.D12, _device.Pins.D11);
             rightMotorPower = new DrivePowerViewModel();
-            rightMotorPower.Init(_device.Pins.D02, _device.Pins.D03, _device.Pins.D04);
+            rightMotorPower.Init(_device.Pins.D05, _device.Pins.D06, _device.Pins.D02);
         }
 
         public void SetMotorPower(float leftPower, float rightPower) 
@@ -101,61 +101,70 @@ namespace Impetuosity_Rover.ViewModels
         {
             SetMotorPower(50, 50);
             Thread.Sleep(TimeSpan.FromSeconds(1));
-            SetMotorPower(0, 0);
+            Stop();
             Thread.Sleep(TimeSpan.FromSeconds(1));
             SetMotorPower(-50, -50);
             Thread.Sleep(TimeSpan.FromSeconds(1));
-            SetMotorPower(0, 0);
+            Stop();
         }
 
-        public void TestBogies()
+        public void TestBogies(bool doLongerDanceTest)
         {
             bool success = true;
             ShowDebugMessage("Shuffle, baby. "); //Play dubstep here
 
-            while (success)
+            if (doLongerDanceTest)
             {
-                try
+                while (success)
                 {
-                    int outer = 5;
-
-                    while (outer > 0)
+                    try
                     {
-                        TurnAllToAngle(0);
-                        TurnAllToAngle(90);
-                        TurnAllToAngle(0);
-                        TurnAllToAngle(90);
+                        int outer = 5;
 
-                        TurnAllToAngle(180);
-                        TurnAllToAngle(90);
-                        TurnAllToAngle(0);
-                        TurnAllToAngle(180);
-
-                        outer--;
-                    }
-
-                    int outerwiggle = 4;
-                    while (outerwiggle >= 0)
-                    {
-                        int wiggle = 5;
-                        while (wiggle > 0)
+                        while (outer > 0)
                         {
-                            TurnAllToAngle(70, TimeSpan.FromTicks(250));
-                            TurnAllToAngle(110, TimeSpan.FromTicks(250));
-                            wiggle--;
+                            TurnAllToAngle(0);
+                            TurnAllToAngle(90);
+                            TurnAllToAngle(0);
+                            TurnAllToAngle(90);
+
+                            TurnAllToAngle(180);
+                            TurnAllToAngle(90);
+                            TurnAllToAngle(0);
+                            TurnAllToAngle(180);
+
+                            outer--;
                         }
 
-                        Thread.Sleep(1000);
-                        outerwiggle--;
-                    }
+                        int outerwiggle = 4;
+                        while (outerwiggle >= 0)
+                        {
+                            int wiggle = 5;
+                            while (wiggle > 0)
+                            {
+                                TurnAllToAngle(70, TimeSpan.FromTicks(250));
+                                TurnAllToAngle(110, TimeSpan.FromTicks(250));
+                                wiggle--;
+                            }
 
+                            Thread.Sleep(1000);
+                            outerwiggle--;
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        success = false;
+                        ShowDebugMessage("Initialize error: " + ex.Message, true);
+                        MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    success = false;
-                    ShowDebugMessage("Initialize error: " + ex.Message, true);
-                    MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
-                }
+            }
+            else
+            {
+                TurnAllToAngle(70, TimeSpan.FromTicks(250));
+                TurnAllToAngle(110, TimeSpan.FromTicks(250));
+                TurnAllToAngle(90, TimeSpan.FromTicks(250));
             }
         }
 
