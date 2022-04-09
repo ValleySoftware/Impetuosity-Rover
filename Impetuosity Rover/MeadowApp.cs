@@ -24,7 +24,7 @@ namespace Impetuosity_Rover
 
             try
             {
-                mainViewModel = new MainViewModel();
+                mainViewModel = new MainViewModel("MainViewModel");
                 mainViewModel.Init();
 
                 result = true;

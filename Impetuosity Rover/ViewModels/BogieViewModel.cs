@@ -13,7 +13,7 @@ namespace Impetuosity_Rover.ViewModels
         Servo _servo;
         double _position;
 
-        public BogieViewModel() : base()
+        public BogieViewModel(string name) : base(name)
         {
 
         }

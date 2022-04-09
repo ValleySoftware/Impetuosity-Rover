@@ -11,14 +11,15 @@ namespace Impetuosity_Rover.ViewModels
     {
         public RgbPwmLed onboardLed;
 
-        private MovementViewModel Movement;
+        public MovementViewModel Movement;
+        private OnboardButonControlsViewModel Buttons;
 
         private Pca9685 pca9685;
         private II2cBus i2CBus;
 
         public readonly int PWMFrequency = 60;
 
-        public MainViewModel() 
+        public MainViewModel(string name) : base(name)
         {
             ShowDebugMessage("Initialize LED for debugging.");
 
@@ -50,18 +51,24 @@ namespace Impetuosity_Rover.ViewModels
                 pca9685.Initialize();
 
                 ShowDebugMessage("Initialize Master Movement Controller");
-                Movement = new MovementViewModel();
+                Movement = new MovementViewModel("MovementViewModel");
                 Movement.Init(pca9685);
 
                 onboardLed.SetColor(Color.Green);
 
-                var t = new Task(() =>
+                try
                 {
-                    Movement.TestBogies(false);
-                    Movement.TestPower();
-                });
+                    ShowDebugMessage("Initialize Onboard Buttons");
+                    Buttons = new OnboardButonControlsViewModel("ButtonsViewModel");
+                    Buttons.Init();
+                }
+                catch (Exception instantiateButtonEx)
+                {
+                    ShowDebugMessage("Initialize Buttons error: " + instantiateButtonEx.Message, true);
+                    onboardLed.SetColor(Color.Coral);
+                }
 
-                t.Start();
+                //Movement.TestBogies(false);
 
                 return true;
             }

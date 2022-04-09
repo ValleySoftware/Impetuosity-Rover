@@ -22,7 +22,7 @@ namespace Impetuosity_Rover.ViewModels
         private DrivePowerViewModel leftMotorPower;
         private DrivePowerViewModel rightMotorPower;
 
-        public MovementViewModel() :base()
+        public MovementViewModel(string name) :base(name)
         {
 
         }
@@ -40,35 +40,50 @@ namespace Impetuosity_Rover.ViewModels
                 60
             ); //Some experimenting done here to get rotation kinda close...
 
-            ShowDebugMessage("Instantiate Bogies");
-            leftFrontBogie = new BogieViewModel();
-            leftRearBogie = new BogieViewModel();
-            rightFrontBogie = new BogieViewModel();
-            rightRearBogie = new BogieViewModel();
+            ShowDebugMessage("Instantiate Bogies", true);
+            leftFrontBogie = new BogieViewModel("LeftFrontBogie");
+            leftRearBogie = new BogieViewModel("LeftRearBogie");
+            rightFrontBogie = new BogieViewModel("RightFrontBogie");
+            rightRearBogie = new BogieViewModel("RightRearBogie");
 
-            ShowDebugMessage("Init Bogies");
+            ShowDebugMessage("Init Bogies", true);
             leftFrontBogie.Init(bus, 15, SG51Conf);
             leftRearBogie.Init(bus, 14, SG51Conf);
             rightFrontBogie.Init(bus, 0, SG51Conf);
             rightRearBogie.Init(bus, 1, SG51Conf);
 
-            ShowDebugMessage("Init Drive Motor Power");
-            leftMotorPower = new DrivePowerViewModel();
-            leftMotorPower.Init(_device.Pins.D13, _device.Pins.D12, _device.Pins.D11);
-            rightMotorPower = new DrivePowerViewModel();
-            rightMotorPower.Init(_device.Pins.D05, _device.Pins.D06, _device.Pins.D02);
+            ShowDebugMessage("Init Drive Motor Power", true);
+            leftMotorPower = new DrivePowerViewModel("LeftDriveMotors");
+            leftMotorPower.Init(_device.Pins.D09, _device.Pins.D10, _device.Pins.D04);
+
+            rightMotorPower = new DrivePowerViewModel("RightDriveMotors");
+            rightMotorPower.Init(_device.Pins.D05, _device.Pins.D06, _device.Pins.D03);
         }
 
         public void SetMotorPower(float leftPower, float rightPower) 
         {
-            leftMotorPower.SetMotorPower(leftPower);
-            rightMotorPower.SetMotorPower(rightPower);
+            try
+            { 
+                leftMotorPower.SetMotorPower(leftPower);
+                rightMotorPower.SetMotorPower(rightPower);
+            }
+            catch (Exception startEx)
+            {
+                ShowDebugMessage("Set Motor Power error: " + startEx.Message, true);
+            }
         }
 
         public void Stop()
         {
-            leftMotorPower.Stop();
-            rightMotorPower.Stop();
+            try
+            { 
+                leftMotorPower.Stop();
+                rightMotorPower.Stop();
+            }
+            catch (Exception stopEx)
+            {
+                ShowDebugMessage("Stop error: " + stopEx.Message, true);
+            }
         }
 
         //with angle of 0 indicating straight ahead.
@@ -99,12 +114,16 @@ namespace Impetuosity_Rover.ViewModels
 
         public void TestPower()
         {
-            SetMotorPower(50, 50);
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            ShowDebugMessage("Motor Test Forward");
+            SetMotorPower(0.5f, 0.5f);
+            Thread.Sleep(TimeSpan.FromMilliseconds(250));
+            ShowDebugMessage("Motor Test Stop");
             Stop();
-            Thread.Sleep(TimeSpan.FromSeconds(1));
-            SetMotorPower(-50, -50);
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            Thread.Sleep(TimeSpan.FromMilliseconds(250));
+            ShowDebugMessage("Motor Test Backwards");
+            SetMotorPower(-0.5f, -0.5f);
+            Thread.Sleep(TimeSpan.FromMilliseconds(250));
+            ShowDebugMessage("Motor Test Stop");
             Stop();
         }
 
@@ -162,9 +181,9 @@ namespace Impetuosity_Rover.ViewModels
             }
             else
             {
-                TurnAllToAngle(70, TimeSpan.FromTicks(250));
-                TurnAllToAngle(110, TimeSpan.FromTicks(250));
-                TurnAllToAngle(90, TimeSpan.FromTicks(250));
+                TurnAllToAngle(70, TimeSpan.FromMilliseconds(250));
+                TurnAllToAngle(110, TimeSpan.FromMilliseconds(250));
+                TurnAllToAngle(90, TimeSpan.FromMilliseconds(250));
             }
         }
 
@@ -185,7 +204,7 @@ namespace Impetuosity_Rover.ViewModels
             rightRearBogie.Position = desiredAngleInDegrees;
 
             MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
-            ShowDebugMessage("Sleep " + PauseAfterMovement.Ticks + " ticks");
+            ShowDebugMessage("Sleep " + PauseAfterMovement.Milliseconds + " milliseconds");
             Thread.Sleep(PauseAfterMovement);
         }
     }

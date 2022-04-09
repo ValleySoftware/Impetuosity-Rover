@@ -14,15 +14,18 @@ namespace Impetuosity_Rover.ViewModels
         protected MeadowApp _appRoot => MeadowApp.Current;
         public F7MicroV2 _device => MeadowApp.Device;
 
-        public ValleyBaseViewModel()
+        protected string _name;
+
+        public ValleyBaseViewModel(string name)
         {
+            _name = name;
         }
 
         public void ShowDebugMessage(string messageToShow, bool force = false)
         {
             if (enableDebugMessages || force)
             {
-                Console.WriteLine(messageToShow);
+                Console.WriteLine(_name + " - " + messageToShow);
             }
         }
     }

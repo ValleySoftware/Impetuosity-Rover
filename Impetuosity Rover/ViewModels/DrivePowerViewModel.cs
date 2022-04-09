@@ -10,23 +10,27 @@ namespace Impetuosity_Rover.ViewModels
         private HBridgeMotor _hBridge;
         bool _stopRequested = false;
 
-        public DrivePowerViewModel() : base()
+        public DrivePowerViewModel(string name) : base(name)
         {
 
         }
 
-        public bool Init(Meadow.Hardware.IPin HBridge1PinA, Meadow.Hardware.IPin HBridge1PinB, Meadow.Hardware.IPin HBridge1PinEnable)
+        public bool Init(
+            Meadow.Hardware.IPin HBridgePinA, 
+            Meadow.Hardware.IPin HBridgePinB, 
+            Meadow.Hardware.IPin HBridgePinEnable)
         {
             bool result = false;
 
             try
             {
-                _hBridge = new HBridgeMotor(MeadowApp.Device,
-                    a1Pin: HBridge1PinA,
-                    a2Pin: HBridge1PinB,
-                    enablePin: HBridge1PinEnable);
+                _hBridge = new HBridgeMotor(
+                    _device.CreatePwmPort(HBridgePinA),
+                    _device.CreatePwmPort(HBridgePinB), 
+                    _device.CreateDigitalOutputPort(HBridgePinEnable),
+                    0.05f);
 
-                _hBridge.IsNeutral = true;
+                //_hBridge.IsNeutral = true;
 
                 result = true;
             }
@@ -49,9 +53,9 @@ namespace Impetuosity_Rover.ViewModels
         {
             _stopRequested = true;
 
-            _hBridge.IsNeutral = true;
+            //_hBridge.IsNeutral = true;
 
-            _hBridge.Power = 0;
+            _hBridge.Power = 0.0f;
         }
 
     }
