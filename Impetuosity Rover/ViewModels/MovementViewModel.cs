@@ -54,10 +54,10 @@ namespace Impetuosity_Rover.ViewModels
 
             ShowDebugMessage("Init Drive Motor Power", true);
             leftMotorPower = new DrivePowerViewModel("LeftDriveMotors");
-            leftMotorPower.Init(_device.Pins.D09, _device.Pins.D10, _device.Pins.D04);
+            leftMotorPower.Init(_device.Pins.D13, _device.Pins.D12, _device.Pins.D11);
 
             rightMotorPower = new DrivePowerViewModel("RightDriveMotors");
-            rightMotorPower.Init(_device.Pins.D05, _device.Pins.D06, _device.Pins.D03);
+            rightMotorPower.Init(_device.Pins.D03, _device.Pins.D04, _device.Pins.D05);
         }
 
         public void SetMotorPower(float leftPower, float rightPower) 

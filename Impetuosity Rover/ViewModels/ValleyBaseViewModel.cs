@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Impetuosity_Rover.ViewModels
 {
-    public class ValleyBaseViewModel
+    public class ValleyBaseViewModel 
     {
         public bool enableDebugMessages = true;
 

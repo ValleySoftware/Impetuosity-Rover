@@ -20,42 +20,44 @@ namespace Impetuosity_Rover.ViewModels
             Meadow.Hardware.IPin HBridgePinB, 
             Meadow.Hardware.IPin HBridgePinEnable)
         {
-            bool result = false;
 
             try
             {
                 _hBridge = new HBridgeMotor(
-                    _device.CreatePwmPort(HBridgePinA),
-                    _device.CreatePwmPort(HBridgePinB), 
-                    _device.CreateDigitalOutputPort(HBridgePinEnable),
-                    0.05f);
+                    device : _device,
+                    a1Pin :HBridgePinA,
+                    a2Pin : HBridgePinB, 
+                    enablePin : HBridgePinEnable);
+                //a1Port :_device.CreatePwmPort(HBridgePinA),
+                //a2Port : _device.CreatePwmPort(HBridgePinB), 
+                //enablePort : _device.CreateDigitalOutputPort(HBridgePinEnable),
+                //pwmFrequency : 0.05f);
 
-                //_hBridge.IsNeutral = true;
+                _hBridge.IsNeutral = true;
 
-                result = true;
+                return true;
             }
             catch (Exception ex)
             {
                 ShowDebugMessage("Error: " + ex.Message, true);
-                result = false;
+                return false;
             }
 
-            return result;
         }
 
         public void SetMotorPower(float power)
         {
             _stopRequested = false;
-            _hBridge.Power = power;
+            _hBridge.Speed = power;
         }
 
         public void Stop()
         {
             _stopRequested = true;
 
-            //_hBridge.IsNeutral = true;
+            _hBridge.IsNeutral = true;
 
-            _hBridge.Power = 0.0f;
+            _hBridge.Speed = 0.0f;
         }
 
     }
