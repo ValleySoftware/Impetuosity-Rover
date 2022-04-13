@@ -28,10 +28,6 @@ namespace Impetuosity_Rover.ViewModels
                     a1Pin :HBridgePinA,
                     a2Pin : HBridgePinB, 
                     enablePin : HBridgePinEnable);
-                //a1Port :_device.CreatePwmPort(HBridgePinA),
-                //a2Port : _device.CreatePwmPort(HBridgePinB), 
-                //enablePort : _device.CreateDigitalOutputPort(HBridgePinEnable),
-                //pwmFrequency : 0.05f);
 
                 _hBridge.IsNeutral = true;
 
@@ -48,7 +44,7 @@ namespace Impetuosity_Rover.ViewModels
         public void SetMotorPower(float power)
         {
             _stopRequested = false;
-            _hBridge.Speed = power;
+            _hBridge.Power = power;
         }
 
         public void Stop()

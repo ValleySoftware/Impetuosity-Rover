@@ -27,17 +27,17 @@ namespace Impetuosity_Rover.ViewModels
 
         }
 
-        public void Init(Pca9685 bus)
+        public void Init(Pca9685 pca)
         {
             ShowDebugMessage("Prepare Servo Conf");
 
             ServoConfig SG51Conf = new ServoConfig
             (
-                new Meadow.Units.Angle(0, Meadow.Units.Angle.UnitType.Degrees),
-                new Meadow.Units.Angle(180, Meadow.Units.Angle.UnitType.Degrees),
-                1000,
-                2750,
-                60
+                minimumAngle : new Meadow.Units.Angle(0, Meadow.Units.Angle.UnitType.Degrees),
+                maximumAngle : new Meadow.Units.Angle(180, Meadow.Units.Angle.UnitType.Degrees),
+                minimumPulseDuration : 1000,
+                maximumPulseDuration : 2750,
+                frequency : 60
             ); //Some experimenting done here to get rotation kinda close...
 
             ShowDebugMessage("Instantiate Bogies", true);
@@ -47,17 +47,17 @@ namespace Impetuosity_Rover.ViewModels
             rightRearBogie = new BogieViewModel("RightRearBogie");
 
             ShowDebugMessage("Init Bogies", true);
-            leftFrontBogie.Init(bus, 15, SG51Conf);
-            leftRearBogie.Init(bus, 14, SG51Conf);
-            rightFrontBogie.Init(bus, 0, SG51Conf);
-            rightRearBogie.Init(bus, 1, SG51Conf);
+            leftFrontBogie.Init(pca, 15, ref SG51Conf);
+            leftRearBogie.Init(pca, 14, ref SG51Conf);
+            rightFrontBogie.Init(pca, 0, ref SG51Conf);
+            rightRearBogie.Init(pca, 1, ref SG51Conf);
 
             ShowDebugMessage("Init Drive Motor Power", true);
             leftMotorPower = new DrivePowerViewModel("LeftDriveMotors");
             leftMotorPower.Init(_device.Pins.D13, _device.Pins.D12, _device.Pins.D11);
 
             rightMotorPower = new DrivePowerViewModel("RightDriveMotors");
-            rightMotorPower.Init(_device.Pins.D03, _device.Pins.D04, _device.Pins.D05);
+            rightMotorPower.Init(_device.Pins.D03, _device.Pins.D04, _device.Pins.D15);
         }
 
         public void SetMotorPower(float leftPower, float rightPower) 
@@ -114,22 +114,19 @@ namespace Impetuosity_Rover.ViewModels
 
         public void TestPower()
         {
-            ShowDebugMessage("Motor Test Forward");
             SetMotorPower(0.5f, 0.5f);
-            Thread.Sleep(TimeSpan.FromMilliseconds(250));
-            ShowDebugMessage("Motor Test Stop");
+            Thread.Sleep(TimeSpan.FromMilliseconds(500));
             Stop();
-            Thread.Sleep(TimeSpan.FromMilliseconds(250));
-            ShowDebugMessage("Motor Test Backwards");
+            Thread.Sleep(TimeSpan.FromMilliseconds(500));
             SetMotorPower(-0.5f, -0.5f);
-            Thread.Sleep(TimeSpan.FromMilliseconds(250));
-            ShowDebugMessage("Motor Test Stop");
+            Thread.Sleep(TimeSpan.FromMilliseconds(500));
             Stop();
         }
 
-        public void TestBogies(bool doLongerDanceTest)
+        public void TestBogies(bool doLongerDanceTest = false)
         {
             bool success = true;
+            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
             ShowDebugMessage("Shuffle, baby. "); //Play dubstep here
 
             if (doLongerDanceTest)
@@ -161,8 +158,8 @@ namespace Impetuosity_Rover.ViewModels
                             int wiggle = 5;
                             while (wiggle > 0)
                             {
-                                TurnAllToAngle(70, TimeSpan.FromTicks(250));
-                                TurnAllToAngle(110, TimeSpan.FromTicks(250));
+                                TurnAllToAngle(70);
+                                TurnAllToAngle(110);
                                 wiggle--;
                             }
 
@@ -181,9 +178,10 @@ namespace Impetuosity_Rover.ViewModels
             }
             else
             {
-                TurnAllToAngle(70, TimeSpan.FromMilliseconds(250));
-                TurnAllToAngle(110, TimeSpan.FromMilliseconds(250));
-                TurnAllToAngle(90, TimeSpan.FromMilliseconds(250));
+                TurnAllToAngle(70);
+                TurnAllToAngle(110);
+                TurnAllToAngle(90);
+                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
             }
         }
 
@@ -195,17 +193,24 @@ namespace Impetuosity_Rover.ViewModels
         private void TurnAllToAngle(double desiredAngleInDegrees, TimeSpan PauseAfterMovement)
         {
 
-            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Yellow);
+            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
             ShowDebugMessage("Go to " + desiredAngleInDegrees + " degrees");
 
-            leftFrontBogie.Position = desiredAngleInDegrees;
-            leftRearBogie.Position = desiredAngleInDegrees;
-            rightFrontBogie.Position = desiredAngleInDegrees;
-            rightRearBogie.Position = desiredAngleInDegrees;
-
-            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
+            try
+            {
+                leftFrontBogie.Position = desiredAngleInDegrees;
+                leftRearBogie.Position = desiredAngleInDegrees;
+                rightFrontBogie.Position = desiredAngleInDegrees;
+                rightRearBogie.Position = desiredAngleInDegrees;
+            }
+            catch (Exception ex)
+            {
+                ShowDebugMessage("Turn All Error: " + ex.Message);
+                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
+            }
             ShowDebugMessage("Sleep " + PauseAfterMovement.Milliseconds + " milliseconds");
             Thread.Sleep(PauseAfterMovement);
+            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
         }
     }
 }

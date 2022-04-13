@@ -18,24 +18,22 @@ namespace Impetuosity_Rover.ViewModels
 
         }
 
-        public bool Init(Pca9685 bus, int servoPortIndex, ServoConfig servoConfig)
+        public bool Init(Pca9685 pca, int servoPortIndex, ref ServoConfig servoConfig)
         {
-            bool result = false;
-
             try
             {
-                _steeringPort = bus.CreatePwmPort(Convert.ToByte(servoPortIndex));
+                _steeringPort = pca.CreatePwmPort(Convert.ToByte(servoPortIndex));
                 _servo = new Servo(_steeringPort, servoConfig);
-                Position = 90;
-                result = true;
+                _position = 90;
+                _servo.RotateTo(new Meadow.Units.Angle(_position));
+                return true;
             }
             catch (Exception ex)
             {
                 ShowDebugMessage("Error: " + ex.Message, true);
-                result = false;
+                return  false;
             }
 
-            return result;
         }
 
         public double Position
@@ -49,7 +47,14 @@ namespace Impetuosity_Rover.ViewModels
                 if (_position != value)
                 {
                     _position = value;
-                    _servo.RotateTo(new Meadow.Units.Angle(_position, Meadow.Units.Angle.UnitType.Degrees));
+                    try
+                    {
+                        _servo.RotateTo(new Meadow.Units.Angle(_position, Meadow.Units.Angle.UnitType.Degrees));
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowDebugMessage("Error: " + ex.Message, true);
+                    }
                 }
             }
         }
