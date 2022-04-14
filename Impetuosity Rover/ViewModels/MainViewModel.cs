@@ -17,7 +17,7 @@ namespace Impetuosity_Rover.ViewModels
         private Pca9685 pca9685;
         private II2cBus i2CBus;
 
-        public readonly int i2cFrequency = 50;
+        public readonly int i2cFrequency = 60;
 
         public MainViewModel(string name) : base(name)
         {
@@ -43,10 +43,10 @@ namespace Impetuosity_Rover.ViewModels
 
                 ShowDebugMessage("Initialize I2C");
 
-                i2CBus = _device.CreateI2cBus(I2cBusSpeed.FastPlus);
+                i2CBus = _device.CreateI2cBus(I2cBusSpeed.Standard);
 
                 ShowDebugMessage("Create PCA9685");
-                pca9685 = new Pca9685(i2CBus, (byte)0x40);
+                pca9685 = new Pca9685(i2CBus, 0x40, i2cFrequency);
                
                 ShowDebugMessage("Initialize PCA9685");
                 pca9685.Initialize();
