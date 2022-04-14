@@ -53,7 +53,7 @@ namespace Impetuosity_Rover.ViewModels
 
             _hBridge.IsNeutral = true;
 
-            _hBridge.Speed = 0.0f;
+            _hBridge.Power = 0.0f;
         }
 
     }

@@ -13,7 +13,7 @@ namespace Impetuosity_Rover.ViewModels
 {
     public class MovementViewModel : ValleyBaseViewModel
     {
-
+        private List<BogieViewModel> _bogies = new List<BogieViewModel>();
         private BogieViewModel leftFrontBogie;
         private BogieViewModel leftRearBogie;
         private BogieViewModel rightFrontBogie;
@@ -36,21 +36,29 @@ namespace Impetuosity_Rover.ViewModels
                 minimumAngle : new Meadow.Units.Angle(0, Meadow.Units.Angle.UnitType.Degrees),
                 maximumAngle : new Meadow.Units.Angle(180, Meadow.Units.Angle.UnitType.Degrees),
                 minimumPulseDuration : 1000,
-                maximumPulseDuration : 2750,
+                //maximumPulseDuration : 2750,
+                maximumPulseDuration: 2000,
                 frequency : 60
             ); //Some experimenting done here to get rotation kinda close...
 
             ShowDebugMessage("Instantiate Bogies", true);
             leftFrontBogie = new BogieViewModel("LeftFrontBogie");
+            _bogies.Add(leftFrontBogie);
             leftRearBogie = new BogieViewModel("LeftRearBogie");
+            _bogies.Add(leftRearBogie);
             rightFrontBogie = new BogieViewModel("RightFrontBogie");
+            _bogies.Add(rightFrontBogie);
             rightRearBogie = new BogieViewModel("RightRearBogie");
+            _bogies.Add(rightRearBogie);
 
             ShowDebugMessage("Init Bogies", true);
-            leftFrontBogie.Init(pca, 15, ref SG51Conf);
-            leftRearBogie.Init(pca, 14, ref SG51Conf);
-            rightFrontBogie.Init(pca, 0, ref SG51Conf);
-            rightRearBogie.Init(pca, 1, ref SG51Conf);
+            leftFrontBogie.Init(pca, 1, ref SG51Conf, 5);
+            leftRearBogie.Init(pca, 0, ref SG51Conf, -15);
+            rightFrontBogie.Init(pca, 14, ref SG51Conf);
+            rightRearBogie.Init(pca, 15, ref SG51Conf, -5);
+
+            //Alignment modifiers, to make sure all are indivitually tuned.
+            //leftRearBogie.AlignmentModifier = -10;
 
             ShowDebugMessage("Init Drive Motor Power", true);
             leftMotorPower = new DrivePowerViewModel("LeftDriveMotors");
@@ -58,6 +66,9 @@ namespace Impetuosity_Rover.ViewModels
 
             rightMotorPower = new DrivePowerViewModel("RightDriveMotors");
             rightMotorPower.Init(_device.Pins.D09, _device.Pins.D10, _device.Pins.D15);
+
+            TestPower();
+            TestBogies();
         }
 
         public void SetMotorPower(float leftPower, float rightPower) 
@@ -127,10 +138,11 @@ namespace Impetuosity_Rover.ViewModels
         {
             bool success = true;
             MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
-            ShowDebugMessage("Shuffle, baby. "); //Play dubstep here
+            ShowDebugMessage("Test all bogies. "); 
 
             if (doLongerDanceTest)
             {
+                ShowDebugMessage("Shuffle, baby. "); //Play dubstep here
                 while (success)
                 {
                     try
@@ -178,10 +190,22 @@ namespace Impetuosity_Rover.ViewModels
             }
             else
             {
-                TurnAllToAngle(70);
-                TurnAllToAngle(110);
+                ShowDebugMessage("Testing Individual Bogies");
+
+                foreach (var element in _bogies)
+                {
+                    ShowDebugMessage("Testing " + element.Name);
+                    element.Test();
+                    Thread.Sleep(TimeSpan.FromMilliseconds(500));
+                }
+
+                ShowDebugMessage("Testing Bogies together");
+                TurnAllToAngle(10);
+                TurnAllToAngle(90);
+                TurnAllToAngle(170);
                 TurnAllToAngle(90);
                 MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
+                ShowDebugMessage("Testing bogies complete");
             }
         }
 

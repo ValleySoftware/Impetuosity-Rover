@@ -28,5 +28,10 @@ namespace Impetuosity_Rover.ViewModels
                 Console.WriteLine(_name + " - " + messageToShow);
             }
         }
+
+        public string Name
+        {
+            get => _name;
+        }
     }
 }
