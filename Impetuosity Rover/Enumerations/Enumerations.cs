@@ -4,8 +4,25 @@ using System.Text;
 
 namespace Impetuosity_Rover.Enumerations
 {
-    internal class Enumerations
+    public static class Enumerations
     {
-        public enum ErrorCodes { UnknownError, ParseError, NoMessageBodyError, IncorrectParametersError  }
+        //public enum ErrorCodes { UnknownError, ParseError, NoMessageBodyError, IncorrectParametersError  }
+
+        public static int valleyMapleError_UnknownError = 100;
+        public static int valleyMapleError_ParseError = 101;
+        public static int valleyMapleError_NoMessageBodyError = 102;
+        public static int valleyMapleError_IncorrectParametersError = 103;
+        public static int valleyMapleError_ActionError = 104;
+
+        public enum MessageStatus 
+        { 
+            error, 
+            pendingData, 
+            pendingSend, 
+            sent, 
+            receivedPendingAction, 
+            completedPendingConfirmation, 
+            confirmed}
+        //public enum MessageType { movement };
     }
 }

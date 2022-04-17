@@ -12,9 +12,9 @@
     <PackageReference Include="Meadow.Foundation.ICs.IOExpanders.Pca9685" Version="0.1.39" />
     <PackageReference Include="Meadow.Foundation.Servos.ServoCore" Version="0.8.39" />
     <PackageReference Include="Meadow.Foundation.Web.Maple.Server" Version="0.5.0" />
+    <PackageReference Include="System.Text.Json" Version="6.0.3" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Models\" />
     <Folder Include="Media\" />
   </ItemGroup>
 </Project>

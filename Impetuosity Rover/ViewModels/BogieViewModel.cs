@@ -28,7 +28,11 @@ namespace Impetuosity_Rover.ViewModels
                 _steeringPort = pca.CreatePwmPort(Convert.ToByte(servoPortIndex));
                 _servo = new Servo(_steeringPort, servoConfig);
                 _position = 90;
-                _servo.RotateTo(new Meadow.Units.Angle(_position));
+
+                if (!MainViewModel.QuietStartup)
+                {
+                    _servo.RotateTo(new Meadow.Units.Angle(_position));
+                }
                 return true;
             }
             catch (Exception ex)

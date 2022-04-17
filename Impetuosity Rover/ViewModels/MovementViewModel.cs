@@ -1,4 +1,5 @@
-﻿using Meadow;
+﻿using Impetuosity_Rover.Models;
+using Meadow;
 using Meadow.Devices;
 using Meadow.Foundation;
 using Meadow.Foundation.ICs.IOExpanders;
@@ -8,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Impetuosity_Rover.ViewModels
 {
@@ -67,21 +69,51 @@ namespace Impetuosity_Rover.ViewModels
             rightMotorPower = new DrivePowerViewModel("RightDriveMotors");
             rightMotorPower.Init(_device.Pins.D09, _device.Pins.D10, _device.Pins.D15);
 
-            TestPower();
-            TestBogies();
+            if (!MainViewModel.QuietStartup)
+            {
+                TestPower();
+                TestBogies();
+            }
         }
 
-        public void SetMotorPower(float leftPower, float rightPower) 
+        public bool SetMotorPower(ref MovementMessageModel request) 
         {
+            var result = false;
+
             try
-            { 
-                leftMotorPower.SetMotorPower(leftPower);
-                rightMotorPower.SetMotorPower(rightPower);
+            {
+                leftMotorPower.SetMotorPower(request.LeftPower);
+                rightMotorPower.SetMotorPower(request.RightPower);
+                request.RequestStatus = Enumerations.Enumerations.MessageStatus.completedPendingConfirmation;
+                result = true;
+
+                request.RequestPerformedStamp = DateTimeOffset.Now;
+
+                if (request.RequestedPowerDuration == null || 
+                    !request.RequestedPowerDuration.Equals(TimeSpan.MinValue))
+                {
+                    if (request.RequestedPowerDuration == null)
+                    {
+                        request.RequestedPowerDuration = TimeSpan.FromMilliseconds(500);
+                    }
+
+                    var duration = request.RequestedPowerDuration;
+
+                    var t = Task.Run(() =>
+                    {
+                        Thread.Sleep(duration);
+                        Stop();
+                    });
+                }
+
             }
             catch (Exception startEx)
             {
+                result = false;
                 ShowDebugMessage("Set Motor Power error: " + startEx.Message, true);
             }
+
+            return result;
         }
 
         public void Stop()
@@ -125,13 +157,11 @@ namespace Impetuosity_Rover.ViewModels
 
         public void TestPower()
         {
-            SetMotorPower(0.5f, 0.5f);
-            Thread.Sleep(TimeSpan.FromMilliseconds(500));
-            Stop();
-            Thread.Sleep(TimeSpan.FromMilliseconds(500));
-            SetMotorPower(-0.5f, -0.5f);
-            Thread.Sleep(TimeSpan.FromMilliseconds(500));
-            Stop();
+            var testOne = new MovementMessageModel() { LeftPower = 0.5f, RightPower = 0.5f, RequestedPowerDuration = TimeSpan.FromMilliseconds(500) };
+            SetMotorPower(ref testOne);
+            var testTwo = new MovementMessageModel() { LeftPower = -0.5f, RightPower = -0.5f, RequestedPowerDuration = TimeSpan.FromMilliseconds(500) };
+            SetMotorPower(ref testTwo);
+
         }
 
         public void TestBogies(bool doLongerDanceTest = false)
