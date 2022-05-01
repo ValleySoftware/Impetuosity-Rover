@@ -86,7 +86,6 @@ namespace Impetuosity_Rover.ViewModels
                 {
                     comms = new CommunicationsViewModel("comms");
                     comms.Init();
-                    onboardLed.SetColor(Color.Green);
                 }
                 catch (Exception ex) 
                 { 

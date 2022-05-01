@@ -1,20 +1,19 @@
 ﻿using Meadow.Foundation.Web.Maple.Server;
 using Meadow.Foundation.Web.Maple.Server.Routing;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using Impetuosity_Rover;
 using static Impetuosity_Rover.Enumerations.Enumerations;
 using Meadow.Gateway.WiFi;
 using System.Threading.Tasks;
 using Impetuosity_Rover.Models;
+using Meadow.Foundation;
 
 namespace Impetuosity_Rover.ViewModels
 {
     public class CommunicationsViewModel : ValleyBaseViewModel
     {
         MapleServer mapleServer;
-        WebMotorRequestHandler motorControlHandler;
+        int commsPort = 5417;
+        
 
         public CommunicationsViewModel(string name) : base(name)
         {
@@ -22,24 +21,28 @@ namespace Impetuosity_Rover.ViewModels
 
         public async Task<bool> Init()
         {
+
+            Console.WriteLine("Starting WiFi", true);
             try
             {
                 var connectionResult =
                     await MeadowApp.Device.WiFiAdapter.Connect(
                         Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
-
+                
                 if (connectionResult.ConnectionStatus != ConnectionStatus.Success)
                 {
                     throw new Exception($"Cannot connect to network: {connectionResult.ConnectionStatus}");
                 }
 
                 mapleServer = new MapleServer(
-                    MeadowApp.Device.WiFiAdapter.IpAddress, 5417
+                    MeadowApp.Device.WiFiAdapter.IpAddress,
+                    port: commsPort,
+                    advertise: true
                 );
 
+                Console.WriteLine("Starting Maple", true);
                 mapleServer.Start();
-
-                //motorControlHandler = new WebMotorRequestHandler();
+                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
             }
             catch (Exception ex)
             {
@@ -55,15 +58,15 @@ namespace Impetuosity_Rover.ViewModels
     {
         public WebMotorRequestHandler()
         {
-            Console.WriteLine("WebRequestHandler Started");
-
+            Console.WriteLine("WebMotorRequestHandler constructor called.");
         }
 
         [HttpPost("/motorcontrol")]
         public IActionResult MotorControl()
         {
+            Console.WriteLine("WebMotorRequestHandler MotorControl method");
+
             Console.WriteLine("MapleWebMotorControlEndpointActivated", true);
-            //Console.WriteLine(Body.ToString(), true);
 
             if (string.IsNullOrEmpty(Body))
             {
@@ -72,9 +75,20 @@ namespace Impetuosity_Rover.ViewModels
 
             IActionResult result = null;
 
+            var m = new MovementMessageModel();
+            m.MessageID = "aaaaaaa";
+            m.RequestedPowerDuration = TimeSpan.FromMilliseconds(500);
+            m.LeftPower = 0.5f;
+            m.RightPower = 0.5f;
+            m.RequestStop = false;
+
+            var outgoing = SimpleJsonSerializer.JsonSerializer.SerializeObject(m);
+
             try
             {
-                MovementMessageModel request = System.Text.Json.JsonSerializer.Deserialize<MovementMessageModel>(Body);
+                MovementMessageModel request = 
+                    (MovementMessageModel)SimpleJsonSerializer.JsonSerializer.DeserializeString(
+                        Body );
 
                 if (request != null)
                 {
