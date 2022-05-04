@@ -15,7 +15,7 @@ namespace Impetuosity_Rover.ViewModels
     {
         public RgbPwmLed onboardLed;
 
-        public static bool QuietStartup = true;
+        private readonly TestMethodology startupTestingMethod = TestMethodology.none;
 
         public MovementViewModel Movement;
         //private OnboardButonControlsViewModel Buttons;
@@ -64,7 +64,7 @@ namespace Impetuosity_Rover.ViewModels
 
                 ShowDebugMessage("Initialize Master Movement Controller");
                 Movement = new MovementViewModel("MovementViewModel");
-                Movement.Init(pca9685);
+                Movement.Init(ref pca9685, startupTestingMethod);
                 /*
                                 try
                                 {
@@ -79,8 +79,6 @@ namespace Impetuosity_Rover.ViewModels
                                     onboardLed.SetColor(Color.Coral);
                                 }
                 */
-                //Movement.TestBogies(false);
-
 
                 try
                 {
@@ -97,7 +95,7 @@ namespace Impetuosity_Rover.ViewModels
             }
             catch (Exception ex)
             {
-                ShowDebugMessage("Initialize error: " + ex.Message, true);
+                ShowDebugMessage("Initialize error: " + ex.Message, ErrorLoggingThreshold.exception);
                 onboardLed.SetColor(Color.Red);
                 return false;
             }

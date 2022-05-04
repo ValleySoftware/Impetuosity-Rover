@@ -6,6 +6,8 @@ using Meadow.Gateway.WiFi;
 using System.Threading.Tasks;
 using Impetuosity_Rover.Models;
 using Meadow.Foundation;
+using System.Net;
+using System.IO;
 
 namespace Impetuosity_Rover.ViewModels
 {
@@ -21,8 +23,9 @@ namespace Impetuosity_Rover.ViewModels
 
         public async Task<bool> Init()
         {
+            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
 
-            Console.WriteLine("Starting WiFi", true);
+            ShowDebugMessage("Starting WiFi");
             try
             {
                 var connectionResult =
@@ -40,13 +43,14 @@ namespace Impetuosity_Rover.ViewModels
                     advertise: true
                 );
 
-                Console.WriteLine("Starting Maple", true);
+                ShowDebugMessage("Starting Maple");
                 mapleServer.Start();
                 MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Comms Init error "  + ex.Message);
+                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
+                ShowDebugMessage("Comms Init error "  + ex.Message);
                 return false;
             }
 
@@ -64,11 +68,17 @@ namespace Impetuosity_Rover.ViewModels
         [HttpPost("/motorcontrol")]
         public IActionResult MotorControl()
         {
-            Console.WriteLine("WebMotorRequestHandler MotorControl method");
+            Console.WriteLine("MapleWebMotorControlEndpointActivated.");
 
-            Console.WriteLine("MapleWebMotorControlEndpointActivated", true);
+            Console.WriteLine($"Maple PostJson with content type {this.Context.Request.ContentType}");
 
-            if (string.IsNullOrEmpty(Body))
+            if (Context.Request.HasEntityBody)
+            {
+                string mybody = ReadBodyFromStream(this.Context.Request);
+                Console.WriteLine($"Body is {mybody} ");
+                return new JsonResult(mybody);
+            }
+            else
             {
                 return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_UnknownError);
             }
@@ -128,6 +138,19 @@ namespace Impetuosity_Rover.ViewModels
                 return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ParseError);
             }
 
+        }
+
+        private string ReadBodyFromStream(HttpListenerRequest request)
+        {
+            MemoryStream memstream = new MemoryStream();
+            request.InputStream.CopyTo(memstream);
+            memstream.Position = 0;
+            string text;
+            using (StreamReader reader = new StreamReader(memstream))
+            {
+                text = reader.ReadToEnd();
+            }
+            return text;
         }
 
     }

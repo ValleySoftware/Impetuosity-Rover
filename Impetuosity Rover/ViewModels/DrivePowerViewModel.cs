@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
+using static Impetuosity_Rover.Enumerations.Enumerations;
 
 namespace Impetuosity_Rover.ViewModels
 {
@@ -35,7 +37,7 @@ namespace Impetuosity_Rover.ViewModels
             }
             catch (Exception ex)
             {
-                ShowDebugMessage("Error: " + ex.Message, true);
+                ShowDebugMessage("Error: " + ex.Message, ErrorLoggingThreshold.exception);
                 return false;
             }
 
@@ -45,6 +47,34 @@ namespace Impetuosity_Rover.ViewModels
         {
             _stopRequested = false;
             _hBridge.Power = power;
+        }
+
+        public bool Test()
+        {
+            var result = false;
+
+            try
+            {
+                var duration = TimeSpan.FromMilliseconds(500);
+
+                SetMotorPower(0.5f);
+
+                Thread.Sleep(duration);
+                Stop();
+
+                SetMotorPower(-0.5f);
+
+                Thread.Sleep(duration);
+                Stop();
+
+                result = true;
+            }
+            catch (Exception ex)
+            {
+                result =  false;
+            }
+
+            return result;
         }
 
         public void Stop()

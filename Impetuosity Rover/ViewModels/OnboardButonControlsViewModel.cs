@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Meadow.Foundation.Sensors.Buttons;
+using static Impetuosity_Rover.Enumerations.Enumerations;
 
 namespace Impetuosity_Rover.ViewModels
 {
@@ -30,7 +31,7 @@ namespace Impetuosity_Rover.ViewModels
 
         private void TestDriveMotorsButton_Clicked(object sender, EventArgs e)
         {
-            _appRoot.mainViewModel.Movement.TestPower();
+            _appRoot.mainViewModel.Movement.TestMotorPower(TestMethodology.none);
         }
 
         private void StopDriveMotorsButton_Clicked(object sender, EventArgs e)
@@ -40,7 +41,7 @@ namespace Impetuosity_Rover.ViewModels
 
         private void TestBogiesButton_Clicked(object sender, EventArgs e)
         {
-            _appRoot.mainViewModel.Movement.TestBogies(false);
+            _appRoot.mainViewModel.Movement.TestBogies(TestMethodology.none);
         }
     }
 }

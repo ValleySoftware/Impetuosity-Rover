@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using static Impetuosity_Rover.Enumerations.Enumerations;
 
 namespace Impetuosity_Rover.ViewModels
 {
@@ -29,7 +30,7 @@ namespace Impetuosity_Rover.ViewModels
 
         }
 
-        public void Init(Pca9685 pca)
+        public void Init(ref Pca9685 pca, TestMethodology requestedTesting = TestMethodology.none)
         {
             ShowDebugMessage("Prepare Servo Conf");
 
@@ -43,7 +44,7 @@ namespace Impetuosity_Rover.ViewModels
                 frequency : 60
             ); //Some experimenting done here to get rotation kinda close...
 
-            ShowDebugMessage("Instantiate Bogies", true);
+            ShowDebugMessage("Instantiate Bogies", ErrorLoggingThreshold.important);
             leftFrontBogie = new BogieViewModel("LeftFrontBogie");
             _bogies.Add(leftFrontBogie);
             leftRearBogie = new BogieViewModel("LeftRearBogie");
@@ -53,27 +54,20 @@ namespace Impetuosity_Rover.ViewModels
             rightRearBogie = new BogieViewModel("RightRearBogie");
             _bogies.Add(rightRearBogie);
 
-            ShowDebugMessage("Init Bogies", true);
-            leftFrontBogie.Init(pca, 1, ref SG51Conf, 5);
-            leftRearBogie.Init(pca, 0, ref SG51Conf, -15);
-            rightFrontBogie.Init(pca, 14, ref SG51Conf);
-            rightRearBogie.Init(pca, 15, ref SG51Conf, -5);
+            ShowDebugMessage("Init Bogies", ErrorLoggingThreshold.important);
+            leftFrontBogie.Init(ref pca, 1, ref SG51Conf, 5);
+            leftRearBogie.Init(ref pca, 0, ref SG51Conf, -15);
+            rightFrontBogie.Init(ref pca, 14, ref SG51Conf);
+            rightRearBogie.Init(ref pca, 15, ref SG51Conf);
 
-            //Alignment modifiers, to make sure all are indivitually tuned.
-            //leftRearBogie.AlignmentModifier = -10;
-
-            ShowDebugMessage("Init Drive Motor Power", true);
+            ShowDebugMessage("Init Drive Motor Power", ErrorLoggingThreshold.important);
             leftMotorPower = new DrivePowerViewModel("LeftDriveMotors");
             leftMotorPower.Init(_device.Pins.D13, _device.Pins.D12, _device.Pins.D11);
 
             rightMotorPower = new DrivePowerViewModel("RightDriveMotors");
             rightMotorPower.Init(_device.Pins.D09, _device.Pins.D10, _device.Pins.D15);
 
-            if (!MainViewModel.QuietStartup)
-            {
-                TestPower();
-                TestBogies();
-            }
+            Test(requestedTesting);
         }
 
         public bool SetMotorPower(ref MovementMessageModel request) 
@@ -99,18 +93,19 @@ namespace Impetuosity_Rover.ViewModels
 
                     var duration = request.RequestedPowerDuration;
 
-                    var t = Task.Run(() =>
-                    {
+                    //Run the function as a thread.  This way it can be blocking, or not blocking.  Startup tests are better blocking.
+                    //var t = Task.Run(() =>
+                    //{
                         Thread.Sleep(duration);
                         Stop();
-                    });
+                    //});
                 }
 
             }
             catch (Exception startEx)
             {
                 result = false;
-                ShowDebugMessage("Set Motor Power error: " + startEx.Message, true);
+                ShowDebugMessage("Set Motor Power error: " + startEx.Message, ErrorLoggingThreshold.exception);
             }
 
             return result;
@@ -125,7 +120,7 @@ namespace Impetuosity_Rover.ViewModels
             }
             catch (Exception stopEx)
             {
-                ShowDebugMessage("Stop error: " + stopEx.Message, true);
+                ShowDebugMessage("Stop error: " + stopEx.Message, ErrorLoggingThreshold.exception);
             }
         }
 
@@ -155,25 +150,208 @@ namespace Impetuosity_Rover.ViewModels
             rightRearBogie.Position = angle;
         }
 
-        public void TestPower()
+        private void TurnAllToAngle(double desiredAngleInDegrees)
         {
-            var testOne = new MovementMessageModel() { LeftPower = 0.5f, RightPower = 0.5f, RequestedPowerDuration = TimeSpan.FromMilliseconds(500) };
-            SetMotorPower(ref testOne);
-            var testTwo = new MovementMessageModel() { LeftPower = -0.5f, RightPower = -0.5f, RequestedPowerDuration = TimeSpan.FromMilliseconds(500) };
-            SetMotorPower(ref testTwo);
-
+            TurnAllToAngle(desiredAngleInDegrees, TimeSpan.FromMilliseconds(500));
         }
 
-        public void TestBogies(bool doLongerDanceTest = false)
+        private void TurnAllToAngle(double desiredAngleInDegrees, TimeSpan PauseAfterMovement)
+        {
+            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
+            ShowDebugMessage("Go to " + desiredAngleInDegrees + " degrees");
+
+            try
+            {
+                leftFrontBogie.Position = desiredAngleInDegrees;
+                leftRearBogie.Position = desiredAngleInDegrees;
+                rightFrontBogie.Position = desiredAngleInDegrees;
+                rightRearBogie.Position = desiredAngleInDegrees;
+            }
+            catch (Exception ex)
+            {
+                ShowDebugMessage("Turn All Error: " + ex.Message);
+                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
+            }
+            ShowDebugMessage("Sleep " + PauseAfterMovement.Milliseconds + " milliseconds");
+            Thread.Sleep(PauseAfterMovement);
+            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
+        }
+
+        //==============================
+        //Testing
+        //==============================
+
+        public bool Test(TestMethodology requestedTesting)
+        {
+            var result = false;
+
+            try
+            {
+                switch (requestedTesting)
+                {
+                    case TestMethodology.none: result = true; break;
+                    case TestMethodology.iAmDeathIncarnate: result = ShuffleBaby(); break;
+                    default:
+                        {
+                            result = TestMotorPower(requestedTesting);
+
+                            if (result)
+                            {
+                                result = TestBogies(requestedTesting);
+                            }
+                        } break;
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return result;
+        }
+
+        public bool TestMotorPower(TestMethodology requestedTesting)
+        {
+            var result = false;
+
+            switch (requestedTesting)
+            {
+                case TestMethodology.simple: result = MotorPowerSimpleTest(); break;
+                case TestMethodology.thorough: result = MotorPowerThoroughTest(); break;
+                default: result = true; break;
+            }
+
+            return result;
+        }
+
+        private bool MotorPowerSimpleTest()
+        {
+            var result = false;
+
+            try
+            {
+                var testOne = new MovementMessageModel() { LeftPower = 0.5f, RightPower = 0.5f, RequestedPowerDuration = TimeSpan.FromMilliseconds(500) };
+                SetMotorPower(ref testOne);
+
+                var testTwo = new MovementMessageModel() { LeftPower = -0.5f, RightPower = -0.5f, RequestedPowerDuration = TimeSpan.FromMilliseconds(500) };
+                SetMotorPower(ref testTwo);
+
+                result = true;
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return result;
+        }
+
+        private bool MotorPowerThoroughTest()
+        {
+            var result = false;
+
+            try
+            {
+                result = leftMotorPower.Test();
+
+                if (result)
+                {
+                    result = rightMotorPower.Test();
+                }
+
+                if (result)
+                {
+                    result = MotorPowerSimpleTest();
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return result;
+        }
+
+        public bool TestBogies(TestMethodology requestedTesting)
         {
             bool success = true;
             MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
-            ShowDebugMessage("Test all bogies. "); 
 
-            if (doLongerDanceTest)
+            switch (requestedTesting)
+            {
+                case TestMethodology.none: success = true; break;
+                case TestMethodology.simple: success = ServoSimpleTest(); ; break;
+                case TestMethodology.thorough: ServoThoroughTest(); break;
+                default: success = true; break;
+            }
+
+            return success;
+        }
+
+        private bool ServoSimpleTest()
+        {
+            var result = false;
+
+            try
+            {
+                ShowDebugMessage("Testing Bogies together");
+                TurnAllToAngle(10);
+                Thread.Sleep(TimeSpan.FromMilliseconds(250));
+                TurnAllToAngle(90);
+                Thread.Sleep(TimeSpan.FromMilliseconds(250));
+                TurnAllToAngle(170);
+                Thread.Sleep(TimeSpan.FromMilliseconds(250));
+                TurnAllToAngle(90);
+                Thread.Sleep(TimeSpan.FromMilliseconds(250));
+                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
+                ShowDebugMessage("Testing bogies complete");
+
+                result = true;
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return result;
+        }
+
+        private bool ServoThoroughTest()
+        {
+            var result = false;
+
+            try
+            {
+                ShowDebugMessage("Testing Individual Bogies");
+
+                foreach (var element in _bogies)
+                {
+                    ShowDebugMessage("Testing " + element.Name);
+                    element.Test();
+                    Thread.Sleep(TimeSpan.FromMilliseconds(250));
+                }
+
+                result = ServoSimpleTest();
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return result;
+        }
+
+        private bool ShuffleBaby()
+        {
+            var result = true;
+
+            try
             {
                 ShowDebugMessage("Shuffle, baby. "); //Play dubstep here
-                while (success)
+                while (result)
                 {
                     try
                     {
@@ -212,59 +390,20 @@ namespace Impetuosity_Rover.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        success = false;
-                        ShowDebugMessage("Initialize error: " + ex.Message, true);
+                        result = false;
+                        ShowDebugMessage("Initialize error: " + ex.Message, ErrorLoggingThreshold.exception);
                         MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
                     }
                 }
-            }
-            else
-            {
-                ShowDebugMessage("Testing Individual Bogies");
 
-                foreach (var element in _bogies)
-                {
-                    ShowDebugMessage("Testing " + element.Name);
-                    element.Test();
-                    Thread.Sleep(TimeSpan.FromMilliseconds(500));
-                }
-
-                ShowDebugMessage("Testing Bogies together");
-                TurnAllToAngle(10);
-                TurnAllToAngle(90);
-                TurnAllToAngle(170);
-                TurnAllToAngle(90);
-                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
-                ShowDebugMessage("Testing bogies complete");
-            }
-        }
-
-        private void TurnAllToAngle(double desiredAngleInDegrees)
-        {
-            TurnAllToAngle(desiredAngleInDegrees, TimeSpan.FromMilliseconds(500));
-        }
-
-        private void TurnAllToAngle(double desiredAngleInDegrees, TimeSpan PauseAfterMovement)
-        {
-
-            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
-            ShowDebugMessage("Go to " + desiredAngleInDegrees + " degrees");
-
-            try
-            {
-                leftFrontBogie.Position = desiredAngleInDegrees;
-                leftRearBogie.Position = desiredAngleInDegrees;
-                rightFrontBogie.Position = desiredAngleInDegrees;
-                rightRearBogie.Position = desiredAngleInDegrees;
             }
             catch (Exception ex)
             {
-                ShowDebugMessage("Turn All Error: " + ex.Message);
-                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
+                result = false;
             }
-            ShowDebugMessage("Sleep " + PauseAfterMovement.Milliseconds + " milliseconds");
-            Thread.Sleep(PauseAfterMovement);
-            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
+
+            return result;
         }
+
     }
 }

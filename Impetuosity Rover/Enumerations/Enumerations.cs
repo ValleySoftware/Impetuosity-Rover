@@ -24,5 +24,21 @@ namespace Impetuosity_Rover.Enumerations
             completedPendingConfirmation, 
             confirmed}
         //public enum MessageType { movement };
+
+        public enum TestMethodology
+        {
+            none,
+            simple,
+            thorough,
+            iAmDeathIncarnate
+        }
+
+        public enum ErrorLoggingThreshold
+        {
+            none,
+            exception,
+            important,
+            debug
+        }
     }
 }

@@ -4,12 +4,13 @@ using Meadow.Foundation.Leds;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static Impetuosity_Rover.Enumerations.Enumerations;
 
 namespace Impetuosity_Rover.ViewModels
 {
     public class ValleyBaseViewModel 
     {
-        public bool enableDebugMessages = true;
+        public ErrorLoggingThreshold debugThreshhold = ErrorLoggingThreshold.important;
 
         protected MeadowApp _appRoot => MeadowApp.Current;
         public F7MicroV2 _device => MeadowApp.Device;
@@ -21,9 +22,9 @@ namespace Impetuosity_Rover.ViewModels
             _name = name;
         }
 
-        public void ShowDebugMessage(string messageToShow, bool force = false)
+        public void ShowDebugMessage(string messageToShow, ErrorLoggingThreshold messageCategory = ErrorLoggingThreshold.debug)
         {
-            if (enableDebugMessages || force)
+            if (messageCategory <= debugThreshhold)
             {
                 Console.WriteLine(_name + " - " + messageToShow);
             }

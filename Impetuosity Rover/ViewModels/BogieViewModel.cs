@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using static Impetuosity_Rover.Enumerations.Enumerations;
 
 namespace Impetuosity_Rover.ViewModels
 {
@@ -20,7 +21,7 @@ namespace Impetuosity_Rover.ViewModels
 
         }
 
-        public bool Init(Pca9685 pca, int servoPortIndex, ref ServoConfig servoConfig, double alignmentModifier = 0)
+        public bool Init(ref Pca9685 pca, int servoPortIndex, ref ServoConfig servoConfig, double alignmentModifier = 0)
         {
             try
             {
@@ -29,15 +30,11 @@ namespace Impetuosity_Rover.ViewModels
                 _servo = new Servo(_steeringPort, servoConfig);
                 _position = 90;
 
-                if (!MainViewModel.QuietStartup)
-                {
-                    _servo.RotateTo(new Meadow.Units.Angle(_position));
-                }
                 return true;
             }
             catch (Exception ex)
             {
-                ShowDebugMessage("Error: " + ex.Message, true);
+                ShowDebugMessage("Error: " + ex.Message, ErrorLoggingThreshold.exception);
                 return  false;
             }
         }
@@ -69,7 +66,9 @@ namespace Impetuosity_Rover.ViewModels
 
                     if (!_position.Equals(adjustedAngle))
                     {
-                        ShowDebugMessage(_name + " angle modified by " + AlignmentModifier + " from " + _position + " to " + adjustedAngle, true);
+                        ShowDebugMessage(
+                            _name + " angle modified by " + AlignmentModifier + " from " + _position + " to " + adjustedAngle,
+                            ErrorLoggingThreshold.debug);
                     }
 
                     if (_servo != null)
@@ -79,7 +78,7 @@ namespace Impetuosity_Rover.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    ShowDebugMessage("Error: " + ex.Message, true);
+                    ShowDebugMessage("Error: " + ex.Message, ErrorLoggingThreshold.exception);
                 }
             }
         }
@@ -87,13 +86,13 @@ namespace Impetuosity_Rover.ViewModels
         public void Test()
         {
             Position = 10;
-            Thread.Sleep(TimeSpan.FromMilliseconds(500));
+            Thread.Sleep(TimeSpan.FromMilliseconds(250));
             Position = 90;
-            Thread.Sleep(TimeSpan.FromMilliseconds(500));
+            Thread.Sleep(TimeSpan.FromMilliseconds(250));
             Position = 170;
-            Thread.Sleep(TimeSpan.FromMilliseconds(500));
+            Thread.Sleep(TimeSpan.FromMilliseconds(250));
             Position = 90;
-            Thread.Sleep(TimeSpan.FromMilliseconds(500));
+            Thread.Sleep(TimeSpan.FromMilliseconds(250));
         }
     }
 }
