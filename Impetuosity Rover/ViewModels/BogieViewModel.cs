@@ -29,6 +29,7 @@ namespace Impetuosity_Rover.ViewModels
                 _steeringPort = pca.CreatePwmPort(Convert.ToByte(servoPortIndex));
                 _servo = new Servo(_steeringPort, servoConfig);
                 _position = 90;
+                RotateToPosition();
 
                 return true;
             }
@@ -58,28 +59,33 @@ namespace Impetuosity_Rover.ViewModels
             set
             {
                 _position = value;
-                try
-                {
-                    var adjustedAngle = _position + AlignmentModifier;
-                    adjustedAngle = Math.Max(adjustedAngle, 0);
-                    adjustedAngle = Math.Min(adjustedAngle, 180);
+                RotateToPosition();
+            }
+        }
 
-                    if (!_position.Equals(adjustedAngle))
-                    {
-                        ShowDebugMessage(
-                            _name + " angle modified by " + AlignmentModifier + " from " + _position + " to " + adjustedAngle,
-                            ErrorLoggingThreshold.debug);
-                    }
+        private void RotateToPosition()
+        {
+            try
+            {
+                var adjustedAngle = Position + AlignmentModifier;
+                adjustedAngle = Math.Max(adjustedAngle, 0);
+                adjustedAngle = Math.Min(adjustedAngle, 180);
 
-                    if (_servo != null)
-                    {
-                        _servo.RotateTo(new Meadow.Units.Angle(adjustedAngle, Meadow.Units.Angle.UnitType.Degrees));
-                    }
-                }
-                catch (Exception ex)
+                if (!_position.Equals(adjustedAngle))
                 {
-                    ShowDebugMessage("Error: " + ex.Message, ErrorLoggingThreshold.exception);
+                    ShowDebugMessage(
+                        _name + " angle modified by " + AlignmentModifier + " from " + Position + " to " + adjustedAngle,
+                        ErrorLoggingThreshold.debug);
                 }
+
+                if (_servo != null)
+                {
+                    _servo.RotateTo(new Meadow.Units.Angle(adjustedAngle, Meadow.Units.Angle.UnitType.Degrees));
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowDebugMessage("Error: " + ex.Message, ErrorLoggingThreshold.exception);
             }
         }
 

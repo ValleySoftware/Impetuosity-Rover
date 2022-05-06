@@ -8,6 +8,7 @@ using Impetuosity_Rover.Models;
 using Meadow.Foundation;
 using System.Net;
 using System.IO;
+using System.Threading;
 
 namespace Impetuosity_Rover.ViewModels
 {
@@ -23,9 +24,27 @@ namespace Impetuosity_Rover.ViewModels
 
         public async Task<bool> Init()
         {
-            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
+            var success = false;
 
-            ShowDebugMessage("Starting WiFi");
+            ShowDebugMessage("Starting WiFi", ErrorLoggingThreshold.important);
+
+            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Yellow);
+
+            //var tokenSource = new CancellationTokenSource();
+            //var token = tokenSource.Token;
+
+            /*Task t = Task.Run(() =>
+            {
+                while (true)
+                {
+                    MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
+                    Task.Delay(TimeSpan.FromSeconds(1));
+
+                    MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
+                    Task.Delay(TimeSpan.FromSeconds(1));
+                }
+            }, token);*/
+
             try
             {
                 var connectionResult =
@@ -43,18 +62,34 @@ namespace Impetuosity_Rover.ViewModels
                     advertise: true
                 );
 
-                ShowDebugMessage("Starting Maple");
+                ShowDebugMessage("Starting Maple", ErrorLoggingThreshold.important);
                 mapleServer.Start();
-                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
+                success = true;
             }
             catch (Exception ex)
             {
-                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
-                ShowDebugMessage("Comms Init error "  + ex.Message);
-                return false;
+                success = false;
+                ShowDebugMessage("Comms Init error " + ex.Message, ErrorLoggingThreshold.exception);
             }
 
-            return true;
+            // Request cancellation.
+            //tokenSource.Cancel();
+
+            //Thread.Sleep(2500);
+            // Cancellation should have happened, so call Dispose.
+           // tokenSource.Dispose();
+
+            if (success)
+            {
+                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
+                ShowDebugMessage("WiFI and Maple startup completed.", ErrorLoggingThreshold.important);
+            }
+            else
+            {
+                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
+            }
+
+            return success;
         }
     }
 
