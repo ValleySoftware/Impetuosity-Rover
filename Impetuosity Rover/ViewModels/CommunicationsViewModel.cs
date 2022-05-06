@@ -30,20 +30,24 @@ namespace Impetuosity_Rover.ViewModels
 
             MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Yellow);
 
-            //var tokenSource = new CancellationTokenSource();
-            //var token = tokenSource.Token;
+            var tokenSource = new CancellationTokenSource();
+            var token = tokenSource.Token;
 
-            /*Task t = Task.Run(() =>
+            Task t = Task.Run(async() =>
             {
-                while (true)
+                ShowDebugMessage("WiFi status flash starting", ErrorLoggingThreshold.debug);
+
+                while (!token.IsCancellationRequested)
                 {
                     MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
-                    Task.Delay(TimeSpan.FromSeconds(1));
+                    await Task.Delay(TimeSpan.FromSeconds(1));
 
                     MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
-                    Task.Delay(TimeSpan.FromSeconds(1));
+                    await Task.Delay(TimeSpan.FromSeconds(1));
                 }
-            }, token);*/
+
+                ShowDebugMessage("WiFi status flash stopping", ErrorLoggingThreshold.debug);
+            }, token);
 
             try
             {
@@ -72,12 +76,12 @@ namespace Impetuosity_Rover.ViewModels
                 ShowDebugMessage("Comms Init error " + ex.Message, ErrorLoggingThreshold.exception);
             }
 
-            // Request cancellation.
-            //tokenSource.Cancel();
+            //Request cancellation.
+            tokenSource.Cancel();
 
-            //Thread.Sleep(2500);
+            Thread.Sleep(2500);
             // Cancellation should have happened, so call Dispose.
-           // tokenSource.Dispose();
+            tokenSource.Dispose();
 
             if (success)
             {
