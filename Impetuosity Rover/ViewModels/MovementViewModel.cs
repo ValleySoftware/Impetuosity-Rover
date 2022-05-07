@@ -88,10 +88,10 @@ namespace Impetuosity_Rover.ViewModels
                 {
                     if (request.RequestedPowerDuration == null)
                     {
-                        request.RequestedPowerDuration = TimeSpan.FromMilliseconds(500);
+                        request.RequestedPowerDuration = DateTimeOffset.MinValue.AddMilliseconds(500);
                     }
 
-                    var duration = request.RequestedPowerDuration;
+                    var duration = request.RequestedPowerDuration.TimeOfDay;
 
                     //Run the function as a thread.  This way it can be blocking, or not blocking.  Startup tests are better blocking.
                     //var t = Task.Run(() =>
@@ -231,10 +231,10 @@ namespace Impetuosity_Rover.ViewModels
 
             try
             {
-                var testOne = new MovementMessageModel() { LeftPower = 0.5f, RightPower = 0.5f, RequestedPowerDuration = TimeSpan.FromMilliseconds(500) };
+                var testOne = new MovementMessageModel() { LeftPower = 0.5f, RightPower = 0.5f, RequestedPowerDuration = DateTimeOffset.MinValue.AddMilliseconds(500) };
                 SetMotorPower(ref testOne);
 
-                var testTwo = new MovementMessageModel() { LeftPower = -0.5f, RightPower = -0.5f, RequestedPowerDuration = TimeSpan.FromMilliseconds(500) };
+                var testTwo = new MovementMessageModel() { LeftPower = -0.5f, RightPower = -0.5f, RequestedPowerDuration = DateTimeOffset.MinValue.AddMilliseconds(500) };
                 SetMotorPower(ref testTwo);
 
                 result = true;

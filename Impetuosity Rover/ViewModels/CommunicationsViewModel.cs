@@ -9,6 +9,7 @@ using Meadow.Foundation;
 using System.Net;
 using System.IO;
 using System.Threading;
+using LitJson;
 
 namespace Impetuosity_Rover.ViewModels
 {
@@ -108,51 +109,40 @@ namespace Impetuosity_Rover.ViewModels
         public IActionResult MotorControl()
         {
             Console.WriteLine("MapleWebMotorControlEndpointActivated.");
+            IActionResult result = null;
 
-            Console.WriteLine($"Maple PostJson with content type {this.Context.Request.ContentType}");
+            string bodyText;
 
             if (Context.Request.HasEntityBody)
             {
-                string mybody = ReadBodyFromStream(this.Context.Request);
-                Console.WriteLine($"Body is {mybody} ");
-                return new JsonResult(mybody);
+                bodyText = ReadBodyFromStream(this.Context.Request);
+                Console.WriteLine($"Body is {bodyText} ");                
+
+                try
+                {
+                    var model = JsonMapper.ToObject<MovementMessageModel>(bodyText);
+
+                    if (model != null)
+                    {
+                        MeadowApp.Current.mainViewModel.messages.Add(model);
+                        model.RequestReceivedStamp = DateTimeOffset.Now;
+                        model.RequestStatus = MessageStatus.receivedPendingAction;
+
+                        result = RequestSetMotorPower(ref model);
+                    }
+                }
+                catch (Exception deserializeEx)
+                {
+                    Console.WriteLine("movement request deserialization error " + deserializeEx.Message, true);
+                    result = new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ParseError);
+                }
             }
             else
             {
                 return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_UnknownError);
             }
 
-            IActionResult result = null;
 
-            var m = new MovementMessageModel();
-            m.MessageID = "aaaaaaa";
-            m.RequestedPowerDuration = TimeSpan.FromMilliseconds(500);
-            m.LeftPower = 0.5f;
-            m.RightPower = 0.5f;
-            m.RequestStop = false;
-
-            var outgoing = SimpleJsonSerializer.JsonSerializer.SerializeObject(m);
-
-            try
-            {
-                MovementMessageModel request = 
-                    (MovementMessageModel)SimpleJsonSerializer.JsonSerializer.DeserializeString(
-                        Body );
-
-                if (request != null)
-                {
-                    MeadowApp.Current.mainViewModel.messages.Add(request);
-                    request.RequestReceivedStamp = DateTimeOffset.Now;
-                    request.RequestStatus = MessageStatus.receivedPendingAction;
-
-                    result = RequestSetMotorPower(ref request);
-                }
-            }
-            catch (Exception deserializeEx)
-            {
-                Console.WriteLine("movement request deserialization error " + deserializeEx.Message, true);
-                result = new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ParseError); 
-            }
 
             return result;
         }

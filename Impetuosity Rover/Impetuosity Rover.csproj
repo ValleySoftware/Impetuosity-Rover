@@ -6,13 +6,13 @@
     <AssemblyName>App</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="LitJson" Version="0.18.0" />
     <PackageReference Include="Meadow" Version="0.30.1" />
     <PackageReference Include="Meadow.F7" Version="0.30.1" />
     <PackageReference Include="Meadow.Foundation" Version="0.32.2" />
     <PackageReference Include="Meadow.Foundation.ICs.IOExpanders.Pca9685" Version="0.1.39" />
     <PackageReference Include="Meadow.Foundation.Servos.ServoCore" Version="0.8.39" />
     <PackageReference Include="Meadow.Foundation.Web.Maple.Server" Version="0.5.0" />
-    <PackageReference Include="SimpleJsonSerializer" Version="0.0.2" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Media\" />

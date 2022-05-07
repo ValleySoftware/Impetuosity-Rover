@@ -15,7 +15,7 @@ namespace Impetuosity_Rover.ViewModels
     {
         public RgbPwmLed onboardLed;
 
-        private readonly TestMethodology startupTestingMethod = TestMethodology.none;
+        private readonly TestMethodology startupTestingMethod = TestMethodology.thorough;
 
         public MovementViewModel Movement;
         //private OnboardButonControlsViewModel Buttons;
