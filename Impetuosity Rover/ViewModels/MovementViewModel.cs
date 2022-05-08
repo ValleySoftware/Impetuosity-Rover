@@ -350,6 +350,8 @@ namespace Impetuosity_Rover.ViewModels
 
             try
             {
+                //Nut bush?
+
                 ShowDebugMessage("Shuffle, baby. "); //Play dubstep here
                 while (result)
                 {

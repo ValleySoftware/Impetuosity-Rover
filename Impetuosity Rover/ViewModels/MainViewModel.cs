@@ -15,7 +15,7 @@ namespace Impetuosity_Rover.ViewModels
     {
         public RgbPwmLed onboardLed;
 
-        private readonly TestMethodology startupTestingMethod = TestMethodology.thorough;
+        private readonly TestMethodology startupTestingMethod = TestMethodology.none;
 
         public MovementViewModel Movement;
         //private OnboardButonControlsViewModel Buttons;
@@ -89,6 +89,7 @@ namespace Impetuosity_Rover.ViewModels
                 { 
                     ShowDebugMessage(ex.ToString());
                     onboardLed.SetColor(Color.Red);
+                    return false;
                 }
 
                 return true;
