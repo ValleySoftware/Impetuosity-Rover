@@ -32,7 +32,7 @@ namespace Impetuosity_Rover.ViewModels
 
         public void Init(ref Pca9685 pca, TestMethodology requestedTesting = TestMethodology.none)
         {
-            ShowDebugMessage("Prepare Servo Conf");
+            mainViewModel.ShowDebugMessage(this, "Prepare Servo Conf");
 
             ServoConfig SG51Conf = new ServoConfig
             (
@@ -44,7 +44,7 @@ namespace Impetuosity_Rover.ViewModels
                 frequency : 60
             ); //Some experimenting done here to get rotation kinda close...
 
-            ShowDebugMessage("Instantiate Bogies", ErrorLoggingThreshold.important);
+            mainViewModel.ShowDebugMessage(this, "Instantiate Bogies", ErrorLoggingThreshold.important);
             leftFrontBogie = new BogieViewModel("LeftFrontBogie");
             _bogies.Add(leftFrontBogie);
             leftRearBogie = new BogieViewModel("LeftRearBogie");
@@ -54,13 +54,13 @@ namespace Impetuosity_Rover.ViewModels
             rightRearBogie = new BogieViewModel("RightRearBogie");
             _bogies.Add(rightRearBogie);
 
-            ShowDebugMessage("Init Bogies", ErrorLoggingThreshold.important);
-            leftFrontBogie.Init(ref pca, 1, ref SG51Conf, 5);
-            leftRearBogie.Init(ref pca, 0, ref SG51Conf, -15);
-            rightFrontBogie.Init(ref pca, 14, ref SG51Conf);
-            rightRearBogie.Init(ref pca, 15, ref SG51Conf);
+            mainViewModel.ShowDebugMessage(this, "Init Bogies", ErrorLoggingThreshold.important);
+            leftFrontBogie.Init(ref pca, 1, ref SG51Conf, -15);
+            leftRearBogie.Init(ref pca, 0, ref SG51Conf, -15, true);
+            rightFrontBogie.Init(ref pca, 15, ref SG51Conf, -20);
+            rightRearBogie.Init(ref pca, 14, ref SG51Conf, 0, true);
 
-            ShowDebugMessage("Init Drive Motor Power", ErrorLoggingThreshold.important);
+            mainViewModel.ShowDebugMessage(this, "Init Drive Motor Power", ErrorLoggingThreshold.important);
             leftMotorPower = new DrivePowerViewModel("LeftDriveMotors");
             leftMotorPower.Init(_device.Pins.D13, _device.Pins.D12, _device.Pins.D11);
 
@@ -105,7 +105,7 @@ namespace Impetuosity_Rover.ViewModels
             catch (Exception startEx)
             {
                 result = false;
-                ShowDebugMessage("Set Motor Power error: " + startEx.Message, ErrorLoggingThreshold.exception);
+                mainViewModel.ShowDebugMessage(this, "Set Motor Power error: " + startEx.Message, ErrorLoggingThreshold.exception);
             }
 
             return result;
@@ -120,22 +120,8 @@ namespace Impetuosity_Rover.ViewModels
             }
             catch (Exception stopEx)
             {
-                ShowDebugMessage("Stop error: " + stopEx.Message, ErrorLoggingThreshold.exception);
+                mainViewModel.ShowDebugMessage(this, "Stop error: " + stopEx.Message, ErrorLoggingThreshold.exception);
             }
-        }
-
-        //with angle of 0 indicating straight ahead.
-        //Reccommend staying between -70 and +70
-        public void TurnBogiesTo(double angle)
-        {
-            TurnFrontBogiesTo(angle);
-            TurnRearBogiesTo(angle * -1);
-        }
-
-        public void TurnBogiesBy(double amountToChangeAngleBy)
-        {
-            TurnFrontBogiesTo(leftFrontBogie.Position + amountToChangeAngleBy);
-            TurnRearBogiesTo(leftFrontBogie.Position + amountToChangeAngleBy );
         }
 
         private void TurnFrontBogiesTo(double angle)
@@ -158,7 +144,7 @@ namespace Impetuosity_Rover.ViewModels
         private void TurnAllToAngle(double desiredAngleInDegrees, TimeSpan PauseAfterMovement)
         {
             MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
-            ShowDebugMessage("Go to " + desiredAngleInDegrees + " degrees");
+            mainViewModel.ShowDebugMessage(this, "Go to " + desiredAngleInDegrees + " degrees");
 
             try
             {
@@ -169,12 +155,59 @@ namespace Impetuosity_Rover.ViewModels
             }
             catch (Exception ex)
             {
-                ShowDebugMessage("Turn All Error: " + ex.Message);
+                mainViewModel.ShowDebugMessage(this, "Turn All Error: " + ex.Message, ErrorLoggingThreshold.exception );
                 MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
             }
-            ShowDebugMessage("Sleep " + PauseAfterMovement.Milliseconds + " milliseconds");
+            mainViewModel.ShowDebugMessage(this, "Sleep " + PauseAfterMovement.Milliseconds + " milliseconds");
             Thread.Sleep(PauseAfterMovement);
             MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
+        }
+
+        private void CentreAllBogies()
+        {
+            leftFrontBogie.CentreBogie();
+            leftRearBogie.CentreBogie();
+            rightFrontBogie.CentreBogie();
+            rightRearBogie.CentreBogie();
+        }        
+        
+        //with angle of 0 indicating straight ahead.
+        //Reccommend staying between -70 and +70
+        private void TurnBogiesTo(double angle)
+        {
+            TurnFrontBogiesTo(angle);
+            TurnRearBogiesTo(angle);
+        }
+
+        private void TurnBogiesBy(double amountToChangeAngleBy)
+        {
+            TurnFrontBogiesTo(leftFrontBogie.Position + amountToChangeAngleBy);
+            TurnRearBogiesTo(leftRearBogie.Position - amountToChangeAngleBy);
+        }
+
+        public bool SetSteeringTo(ref SteeringMessageModel model)
+        {
+            var result = false;
+
+            try
+            {
+                switch (model.RequestType)
+                {
+                    case SteeringRequestType.AdjustBy: TurnBogiesBy(model.Value); break;
+                    case SteeringRequestType.SetTo: TurnBogiesTo(model.Value); break;
+                    case SteeringRequestType.Centre: CentreAllBogies(); break;
+                    default:;break;
+                }
+
+                result = true;
+            }
+            catch (Exception broadSteeringRequestException)
+            {
+                mainViewModel.ShowDebugMessage(this, "BroadSetSteering Error: " + broadSteeringRequestException.Message, ErrorLoggingThreshold.exception);
+            }
+
+
+            return result;
         }
 
         //==============================
@@ -297,7 +330,7 @@ namespace Impetuosity_Rover.ViewModels
 
             try
             {
-                ShowDebugMessage("Testing Bogies together");
+                mainViewModel.ShowDebugMessage(this, "Testing Bogies together");
                 TurnAllToAngle(10);
                 Thread.Sleep(TimeSpan.FromMilliseconds(250));
                 TurnAllToAngle(90);
@@ -307,7 +340,7 @@ namespace Impetuosity_Rover.ViewModels
                 TurnAllToAngle(90);
                 Thread.Sleep(TimeSpan.FromMilliseconds(250));
                 MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
-                ShowDebugMessage("Testing bogies complete");
+                mainViewModel.ShowDebugMessage(this, "Testing bogies complete");
 
                 result = true;
             }
@@ -325,11 +358,11 @@ namespace Impetuosity_Rover.ViewModels
 
             try
             {
-                ShowDebugMessage("Testing Individual Bogies");
+                mainViewModel.ShowDebugMessage(this, "Testing Individual Bogies");
 
                 foreach (var element in _bogies)
                 {
-                    ShowDebugMessage("Testing " + element.Name);
+                    mainViewModel.ShowDebugMessage(this, "Testing " + element.Name);
                     element.Test();
                     Thread.Sleep(TimeSpan.FromMilliseconds(250));
                 }
@@ -352,7 +385,7 @@ namespace Impetuosity_Rover.ViewModels
             {
                 //Nut bush?
 
-                ShowDebugMessage("Shuffle, baby. "); //Play dubstep here
+                mainViewModel.ShowDebugMessage(this, "Shuffle, baby. "); //Play dubstep here
                 while (result)
                 {
                     try
@@ -393,7 +426,7 @@ namespace Impetuosity_Rover.ViewModels
                     catch (Exception ex)
                     {
                         result = false;
-                        ShowDebugMessage("Initialize error: " + ex.Message, ErrorLoggingThreshold.exception);
+                        mainViewModel.ShowDebugMessage(this, "Initialize error: " + ex.Message, ErrorLoggingThreshold.exception);
                         MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
                     }
                 }

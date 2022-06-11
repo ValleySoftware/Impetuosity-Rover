@@ -25,6 +25,13 @@ namespace Impetuosity_Rover.Enumerations
             confirmed}
         //public enum MessageType { movement };
 
+        public enum SteeringRequestType
+        {
+            AdjustBy,
+            SetTo,
+            Centre
+        }
+
         public enum TestMethodology
         {
             none,

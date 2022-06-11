@@ -37,7 +37,7 @@ namespace Impetuosity_Rover.ViewModels
             }
             catch (Exception ex)
             {
-                ShowDebugMessage("Error: " + ex.Message, ErrorLoggingThreshold.exception);
+                mainViewModel.ShowDebugMessage(this, "Error: " + ex.Message, ErrorLoggingThreshold.exception);
                 return false;
             }
 

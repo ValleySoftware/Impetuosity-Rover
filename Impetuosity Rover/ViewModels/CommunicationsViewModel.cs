@@ -27,7 +27,7 @@ namespace Impetuosity_Rover.ViewModels
         {
             var success = false;
 
-            ShowDebugMessage("Starting WiFi", ErrorLoggingThreshold.important);
+            mainViewModel.ShowDebugMessage(this, "Starting WiFi", ErrorLoggingThreshold.important);
 
             MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Yellow);
 
@@ -36,7 +36,7 @@ namespace Impetuosity_Rover.ViewModels
 
             Task t = Task.Run(async() =>
             {
-                ShowDebugMessage("WiFi status flash starting", ErrorLoggingThreshold.debug);
+                mainViewModel.ShowDebugMessage(this, "WiFi status flash starting", ErrorLoggingThreshold.important);
 
                 while (!token.IsCancellationRequested)
                 {
@@ -47,7 +47,10 @@ namespace Impetuosity_Rover.ViewModels
                     await Task.Delay(TimeSpan.FromSeconds(1));
                 }
 
-                ShowDebugMessage("WiFi status flash stopping", ErrorLoggingThreshold.debug);
+                mainViewModel.ShowDebugMessage(
+                    this, 
+                    "WiFi status flash stopping", 
+                    ErrorLoggingThreshold.debug);
             }, token);
 
             try
@@ -66,15 +69,15 @@ namespace Impetuosity_Rover.ViewModels
                     port: commsPort,
                     advertise: true
                 );
-
-                ShowDebugMessage("Starting Maple", ErrorLoggingThreshold.important);
+                mapleServer.DeviceName = "Impetuosity Rover";
+                mainViewModel.ShowDebugMessage(this, "Starting Maple", ErrorLoggingThreshold.important);
                 mapleServer.Start();
                 success = true;
             }
             catch (Exception ex)
             {
                 success = false;
-                ShowDebugMessage("Comms Init error " + ex.Message, ErrorLoggingThreshold.exception);
+                mainViewModel.ShowDebugMessage(this, "Comms Init error " + ex.Message, ErrorLoggingThreshold.exception);
             }
 
             //Request cancellation.
@@ -87,7 +90,7 @@ namespace Impetuosity_Rover.ViewModels
             if (success)
             {
                 MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
-                ShowDebugMessage("WiFI and Maple startup completed.", ErrorLoggingThreshold.important);
+                mainViewModel.ShowDebugMessage(this, "WiFI and Maple startup completed.", ErrorLoggingThreshold.important);
             }
             else
             {
@@ -169,7 +172,87 @@ namespace Impetuosity_Rover.ViewModels
 
         }
 
-        private string ReadBodyFromStream(HttpListenerRequest request)
+
+
+        public class WebSteeringRequestHandler : RequestHandlerBase
+        {
+            public WebSteeringRequestHandler()
+            {
+                Console.WriteLine("WebSteeringRequestHandler constructor called.");
+            }
+
+            [HttpPost("/steeringcontrol")]
+            public IActionResult MotorControl()
+            {
+                Console.WriteLine("MapleWebSteeringControlEndpointActivated.");
+                IActionResult result = null;
+
+                string bodyText;
+
+                if (Context.Request.HasEntityBody)
+                {
+                    bodyText = ReadBodyFromStream(this.Context.Request);
+                    Console.WriteLine($"Body is {bodyText} ");
+
+                    try
+                    {
+                        var model = JsonMapper.ToObject<SteeringMessageModel>(bodyText);
+
+                        if (model != null)
+                        {
+                            MeadowApp.Current.mainViewModel.messages.Add(model);
+                            model.RequestReceivedStamp = DateTimeOffset.Now;
+                            model.RequestStatus = MessageStatus.receivedPendingAction;
+
+                            result = RequestChangeSteering(ref model);
+                        }
+                    }
+                    catch (Exception deserializeEx)
+                    {
+                        Console.WriteLine("steering request deserialization error " + deserializeEx.Message, true);
+                        result = new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ParseError);
+                    }
+                }
+                else
+                {
+                    return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_UnknownError);
+                }
+
+
+
+                return result;
+            }
+
+
+
+            private IActionResult RequestChangeSteering(ref SteeringMessageModel request)
+            {
+                try
+                {
+                    if (MeadowApp.Current.mainViewModel.Movement.SetSteeringTo(ref request))
+                    {
+                        return new OkResult();
+                    }
+                    else
+                    {
+                        return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ActionError);
+                    }
+
+                }
+                catch (Exception parseException)
+                {
+                    Console.WriteLine("steering request error " + parseException.Message, true);
+                    return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ParseError);
+                }
+
+            }
+        }
+
+        //=======================
+        //Shared code
+        //=======================
+
+        public static string ReadBodyFromStream(HttpListenerRequest request)
         {
             MemoryStream memstream = new MemoryStream();
             request.InputStream.CopyTo(memstream);

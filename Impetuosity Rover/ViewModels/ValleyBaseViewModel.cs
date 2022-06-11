@@ -13,7 +13,7 @@ namespace Impetuosity_Rover.ViewModels
         public ErrorLoggingThreshold debugThreshhold = ErrorLoggingThreshold.important;
 
         protected MeadowApp _appRoot => MeadowApp.Current;
-        public F7MicroV2 _device => MeadowApp.Device;
+        public F7FeatherV2 _device => MeadowApp.Device;
 
         protected string _name;
 
@@ -22,17 +22,11 @@ namespace Impetuosity_Rover.ViewModels
             _name = name;
         }
 
-        public void ShowDebugMessage(string messageToShow, ErrorLoggingThreshold messageCategory = ErrorLoggingThreshold.debug)
-        {
-            if (messageCategory <= debugThreshhold)
-            {
-                Console.WriteLine(_name + " - " + messageToShow);
-            }
-        }
-
         public string Name
         {
             get => _name;
         }
+
+        public MainViewModel mainViewModel => MeadowApp.Current.mainViewModel;
     }
 }

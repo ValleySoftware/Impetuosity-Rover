@@ -6,7 +6,7 @@ using System;
 namespace Impetuosity_Rover
 {
     // Change F7MicroV2 to F7Micro for V1.x boards
-    public class MeadowApp : App<F7MicroV2, MeadowApp>
+    public class MeadowApp : App<F7FeatherV2, MeadowApp>
     {
         public MainViewModel mainViewModel;
 
