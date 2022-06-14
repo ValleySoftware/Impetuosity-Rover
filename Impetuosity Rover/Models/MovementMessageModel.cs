@@ -11,5 +11,6 @@ namespace Impetuosity_Rover.Models
         public float LeftPower { get; set; }
         public float RightPower { get; set; }
         public bool RequestStop { get; set; }
+
     }
 }

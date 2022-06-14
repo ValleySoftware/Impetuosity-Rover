@@ -21,12 +21,53 @@ namespace Impetuosity_Rover.ViewModels
         private BogieViewModel leftRearBogie;
         private BogieViewModel rightFrontBogie;
         private BogieViewModel rightRearBogie;
+        private bool _bogiesTransitioning = false;
         
         private DrivePowerViewModel leftMotorPower;
         private DrivePowerViewModel rightMotorPower;
 
         public MovementViewModel(string name) :base(name)
         {
+
+        }
+
+        public static MovementMessageModel ModelFromJSONString(string json)
+        {
+            var result = new MovementMessageModel();
+
+            try
+            {
+                json = json.Substring(2, json.Length - 3);
+                string conditionOne = "\":";
+                string conditionTwo = ",\"";
+
+                var conditions = new string[2] { conditionOne, conditionTwo };
+                var parts = json.Split(conditions, StringSplitOptions.RemoveEmptyEntries);
+
+                int i = 0;
+
+                while (i < parts.Length)
+                {
+                    if (i % 2 != 0 &&
+                        parts[i][0].Equals("\""))
+                    {
+                        parts[i] = parts[i].Substring(1, parts[i].Length - 2);
+                    }
+                    
+                    var ind = parts[1].IndexOf("\"");
+                    if (ind > 0)
+                    {
+                        parts[i] = parts[i].Substring(0, ind);
+                    }
+                    
+                    parts[i] = parts[i].Trim();
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return result;
 
         }
 
@@ -158,6 +199,7 @@ namespace Impetuosity_Rover.ViewModels
                 mainViewModel.ShowDebugMessage(this, "Turn All Error: " + ex.Message, ErrorLoggingThreshold.exception );
                 MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
             }
+
             mainViewModel.ShowDebugMessage(this, "Sleep " + PauseAfterMovement.Milliseconds + " milliseconds");
             Thread.Sleep(PauseAfterMovement);
             MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
@@ -169,14 +211,18 @@ namespace Impetuosity_Rover.ViewModels
             leftRearBogie.CentreBogie();
             rightFrontBogie.CentreBogie();
             rightRearBogie.CentreBogie();
-        }        
-        
+        }
+
         //with angle of 0 indicating straight ahead.
         //Reccommend staying between -70 and +70
         private void TurnBogiesTo(double angle)
         {
-            TurnFrontBogiesTo(angle);
-            TurnRearBogiesTo(angle);
+            if (angle >= -70 &&
+                angle <= 70)
+            {
+                TurnFrontBogiesTo(angle);
+                TurnRearBogiesTo(angle);
+            }
         }
 
         private void TurnBogiesBy(double amountToChangeAngleBy)
@@ -185,25 +231,37 @@ namespace Impetuosity_Rover.ViewModels
             TurnRearBogiesTo(leftRearBogie.Position - amountToChangeAngleBy);
         }
 
-        public bool SetSteeringTo(ref SteeringMessageModel model)
+        public bool TurnBogies(ref SteeringMessageModel request)
         {
             var result = false;
 
-            try
+            if (!_bogiesTransitioning)
             {
-                switch (model.RequestType)
-                {
-                    case SteeringRequestType.AdjustBy: TurnBogiesBy(model.Value); break;
-                    case SteeringRequestType.SetTo: TurnBogiesTo(model.Value); break;
-                    case SteeringRequestType.Centre: CentreAllBogies(); break;
-                    default:;break;
-                }
+                _bogiesTransitioning = true;
 
-                result = true;
-            }
-            catch (Exception broadSteeringRequestException)
-            {
-                mainViewModel.ShowDebugMessage(this, "BroadSetSteering Error: " + broadSteeringRequestException.Message, ErrorLoggingThreshold.exception);
+                request.RequestPerformedStamp = DateTimeOffset.Now;
+                request.RequestStatus = Enumerations.Enumerations.MessageStatus.completedPendingConfirmation;
+
+                try
+                {
+                    switch (request.RequestType)
+                    {
+                        case SteeringRequestType.AdjustBy: TurnBogiesBy(request.Value); break;
+                        case SteeringRequestType.SetTo: TurnBogiesTo(request.Value); break;
+                        case SteeringRequestType.Centre: CentreAllBogies(); break;
+                        default:; break;
+                    }
+
+                    result = true;
+                }
+                catch (Exception broadSteeringRequestException)
+                {
+                    mainViewModel.ShowDebugMessage(this, "BroadSetSteering Error: " + broadSteeringRequestException.Message, ErrorLoggingThreshold.exception);
+                }
+                finally
+                {
+                    _bogiesTransitioning = false;
+                }
             }
 
 

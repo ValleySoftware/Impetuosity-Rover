@@ -20,7 +20,7 @@ namespace Impetuosity_Rover.ViewModels
         private Timer debugLogTimer;
         private bool debugQueueScanActive = false;
 
-        private readonly TestMethodology startupTestingMethod = TestMethodology.simple;
+        private readonly TestMethodology startupTestingMethod = TestMethodology.none;
 
         private List<string> debugQueue = new List<string>();
 
@@ -28,6 +28,8 @@ namespace Impetuosity_Rover.ViewModels
         //private OnboardButonControlsViewModel Buttons;
         private CommunicationsViewModel comms;
 
+
+        public DisplayViewModel Display;
         private Pca9685 pca9685;
         private II2cBus i2CBus;
 
@@ -72,6 +74,11 @@ namespace Impetuosity_Rover.ViewModels
                 ShowDebugMessage(this, "Initialize I2C");
 
                 i2CBus = _device.CreateI2cBus(I2cBusSpeed.Standard);
+
+                ShowDebugMessage(this, "Init Display");
+                Display = new DisplayViewModel("Main Display");
+                Display.Init(i2CBus);
+                Display.ShowMessage(new List<string>() { "Startup in progress" });
 
                 ShowDebugMessage(this, "Create PCA9685");
                 pca9685 = new Pca9685(i2CBus, 0x40, i2cFrequency);

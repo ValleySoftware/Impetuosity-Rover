@@ -10,6 +10,7 @@ using System.Net;
 using System.IO;
 using System.Threading;
 using LitJson;
+using System.Collections.Generic;
 
 namespace Impetuosity_Rover.ViewModels
 {
@@ -36,7 +37,7 @@ namespace Impetuosity_Rover.ViewModels
 
             Task t = Task.Run(async() =>
             {
-                mainViewModel.ShowDebugMessage(this, "WiFi status flash starting", ErrorLoggingThreshold.important);
+                mainViewModel.ShowDebugMessage(this, "WiFi status flash starting", ErrorLoggingThreshold.debug);
 
                 while (!token.IsCancellationRequested)
                 {
@@ -91,6 +92,7 @@ namespace Impetuosity_Rover.ViewModels
             {
                 MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
                 mainViewModel.ShowDebugMessage(this, "WiFI and Maple startup completed.", ErrorLoggingThreshold.important);
+                mainViewModel.Display.ShowMessage(new List<string>() { "Startup Complete" });
             }
             else
             {
@@ -123,7 +125,9 @@ namespace Impetuosity_Rover.ViewModels
 
                 try
                 {
-                    var model = JsonMapper.ToObject<MovementMessageModel>(bodyText);
+                    var model = new MovementMessageModel();
+                    //var model = JsonMapper.ToObject<MovementMessageModel>(bodyText);
+                    SSJSONStringToObject(bodyText, model);
 
                     if (model != null)
                     {
@@ -182,7 +186,7 @@ namespace Impetuosity_Rover.ViewModels
             }
 
             [HttpPost("/steeringcontrol")]
-            public IActionResult MotorControl()
+            public IActionResult SteeringControl()
             {
                 Console.WriteLine("MapleWebSteeringControlEndpointActivated.");
                 IActionResult result = null;
@@ -196,8 +200,10 @@ namespace Impetuosity_Rover.ViewModels
 
                     try
                     {
-                        var model = JsonMapper.ToObject<SteeringMessageModel>(bodyText);
+                        var model = new SteeringMessageModel();
 
+                        //var model = JsonMapper.ToObject<SteeringMessageModel>(bodyText);
+                        SSJSONStringToObject(bodyText, model);
                         if (model != null)
                         {
                             MeadowApp.Current.mainViewModel.messages.Add(model);
@@ -229,14 +235,14 @@ namespace Impetuosity_Rover.ViewModels
             {
                 try
                 {
-                    if (MeadowApp.Current.mainViewModel.Movement.SetSteeringTo(ref request))
-                    {
-                        return new OkResult();
-                    }
-                    else
-                    {
-                        return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ActionError);
-                    }
+                        if (MeadowApp.Current.mainViewModel.Movement.TurnBogies(ref request))
+                        {
+                            return new OkResult();
+                        }
+                        else
+                        {
+                            return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ActionError);
+                        }
 
                 }
                 catch (Exception parseException)
@@ -263,6 +269,117 @@ namespace Impetuosity_Rover.ViewModels
                 text = reader.ReadToEnd();
             }
             return text;
+        }
+
+        public static MessageBaseModel SSJSONStringToObject(string json, MessageBaseModel destinationObject)
+        {
+            var l = JSONStringToKeyValuePairs(json);
+
+            if (l != null)
+            {
+                return KeyValuePairListToObject(l, destinationObject);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private static List<KeyValuePair<string, string>> JSONStringToKeyValuePairs(string json)
+        {
+            List<KeyValuePair<string, string>> result = new List<KeyValuePair<string, string>>();
+
+            try
+            {
+                json = json.Substring(2, json.Length - 3);
+                string conditionOne = "\":";
+                string conditionTwo = ",\"";
+
+                var conditions = new string[2] { conditionOne, conditionTwo };
+                var parts = json.Split(conditions, StringSplitOptions.RemoveEmptyEntries);
+
+                int i = 0;
+
+                while (i < parts.Length)
+                {
+                    //int mod = i % 2;
+
+                    //if (mod != 0 &&
+
+                    if (!string.IsNullOrEmpty(parts[i]) &&
+                        parts[i][0].Equals("\""))
+                    {
+                        parts[i] = parts[i].Substring(1, parts[i].Length - 2);
+                    }
+
+                    var ind = parts[1].IndexOf("\"");
+                    if (ind > 0)
+                    {
+                        parts[i] = parts[i].Substring(0, ind);
+                    }
+
+                    parts[i] = parts[i].Trim();
+
+                    i++;
+                }
+
+
+                int buildListLoop = 0;
+
+                while (buildListLoop < parts.Length)
+                {
+                    try
+                    {
+                        var element = 
+                            new KeyValuePair<string, string>(
+                                parts[buildListLoop], 
+                                parts[buildListLoop + 1]);
+                        result.Add(element);
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+
+                    buildListLoop = buildListLoop + 2;
+                }
+
+                    return result;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
+        private static MessageBaseModel KeyValuePairListToObject(
+            List<KeyValuePair<string, string>> kvp, 
+            object destinationObject)
+        {
+            if (destinationObject == null)
+            {
+                return null;
+            }
+
+            Type a = destinationObject.GetType();
+
+            foreach (var element in kvp)
+            {
+                try
+                {
+                    var prop = a.GetProperty(element.Key);
+                    if (prop != null)
+                    {
+                        prop.SetValue(destinationObject, element.Value);
+                    }
+                }
+                catch (Exception e)
+                {
+
+                }
+            }
+
+            return (MessageBaseModel)destinationObject;
         }
 
     }
