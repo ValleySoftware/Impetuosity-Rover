@@ -8,6 +8,6 @@ namespace Impetuosity_Rover.Models
     public class SteeringMessageModel : MessageBaseModel
     {
         public SteeringRequestType RequestType { get; set; }
-        public float Value { get; set; }
+        public double SteeringValue { get; set; }
     }
 }

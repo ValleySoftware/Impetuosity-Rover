@@ -353,7 +353,7 @@ namespace Impetuosity_Rover.ViewModels
         }
 
         private static MessageBaseModel KeyValuePairListToObject(
-            List<KeyValuePair<string, string>> kvp, 
+            List<KeyValuePair<string, string>> kvpList, 
             object destinationObject)
         {
             if (destinationObject == null)
@@ -361,21 +361,83 @@ namespace Impetuosity_Rover.ViewModels
                 return null;
             }
 
-            Type a = destinationObject.GetType();
+            Type objType = destinationObject.GetType();
 
-            foreach (var element in kvp)
+            foreach (var keyValuePair in kvpList)
             {
                 try
                 {
-                    var prop = a.GetProperty(element.Key);
-                    if (prop != null)
+                    var typePropertyMatchingKey = objType.GetProperty(keyValuePair.Key);
+
+                    if (typePropertyMatchingKey != null && 
+                        keyValuePair.Value != null)
                     {
-                        prop.SetValue(destinationObject, element.Value);
+
+                        if (typePropertyMatchingKey.PropertyType == typeof(int))
+                        {
+                            typePropertyMatchingKey.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
+                        }
+
+                        if (typePropertyMatchingKey.PropertyType == typeof(string))
+                        {
+                            typePropertyMatchingKey.SetValue(destinationObject, keyValuePair.Value, null);
+                        }
+
+                        if (typePropertyMatchingKey.PropertyType == typeof(DateTime))
+                        {
+                            typePropertyMatchingKey.SetValue(destinationObject, Convert.ToDateTime(keyValuePair.Value), null);
+                        }
+
+                        if (typePropertyMatchingKey.PropertyType == typeof(TimeSpan))
+                        {                            
+                            typePropertyMatchingKey.SetValue(destinationObject, TimeSpan.Parse(keyValuePair.Value), null);
+                        }
+
+                        if (typePropertyMatchingKey.PropertyType == typeof(DateTimeOffset))
+                        {
+                            var d = new DateTimeOffset(
+                                Convert.ToInt32(keyValuePair.Value.Substring(0, 4)),
+                                Convert.ToInt32(keyValuePair.Value.Substring(4, 2)),
+                                Convert.ToInt32(keyValuePair.Value.Substring(6, 2)),
+                                Convert.ToInt32(keyValuePair.Value.Substring(8, 2)),
+                                Convert.ToInt32(keyValuePair.Value.Substring(8, 2)),
+                                Convert.ToInt32(keyValuePair.Value.Substring(8, 2)), TimeSpan.Zero);
+                            typePropertyMatchingKey.SetValue(destinationObject, d, null);
+                        }
+
+                        if (typePropertyMatchingKey.PropertyType == typeof(bool))
+                        {
+                            typePropertyMatchingKey.SetValue(destinationObject, Convert.ToBoolean(keyValuePair.Value.ToString()), null);
+                        }
+
+                        if (typePropertyMatchingKey.PropertyType == typeof(float) ||
+                            typePropertyMatchingKey.PropertyType == typeof(double))
+                        {
+                            string s = keyValuePair.Value.ToString();
+                            double d = Convert.ToDouble(s);
+                            float f = (float)d;
+                            typePropertyMatchingKey.SetValue(destinationObject, f, null);
+
+                            //typePropertyMatchingKey.SetValue(destinationObject, Convert.ToDouble(keyValuePair.Value.ToString()), null);
+                        }
+
+                        if (typePropertyMatchingKey.PropertyType == typeof(SteeringRequestType))
+                        {
+                            typePropertyMatchingKey.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
+                        }
+
                     }
                 }
                 catch (Exception e)
                 {
-
+                    Console.WriteLine(
+                        "property value error on " + 
+                        keyValuePair.Key + 
+                        " - " + 
+                        keyValuePair.Value + 
+                        " : " + 
+                        e.Message, 
+                        true);
                 }
             }
 

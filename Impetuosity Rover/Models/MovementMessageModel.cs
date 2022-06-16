@@ -7,7 +7,7 @@ namespace Impetuosity_Rover.Models
 {
     public class MovementMessageModel : MessageBaseModel
     {
-        public DateTimeOffset RequestedPowerDuration { get; set; } //Timespan no available in LitJson
+        public TimeSpan RequestedPowerDuration { get; set; }
         public float LeftPower { get; set; }
         public float RightPower { get; set; }
         public bool RequestStop { get; set; }

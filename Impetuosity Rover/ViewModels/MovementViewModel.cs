@@ -129,10 +129,10 @@ namespace Impetuosity_Rover.ViewModels
                 {
                     if (request.RequestedPowerDuration == null)
                     {
-                        request.RequestedPowerDuration = DateTimeOffset.MinValue.AddMilliseconds(500);
+                        request.RequestedPowerDuration = TimeSpan.FromMilliseconds(500);
                     }
 
-                    var duration = request.RequestedPowerDuration.TimeOfDay;
+                    var duration = request.RequestedPowerDuration;
 
                     //Run the function as a thread.  This way it can be blocking, or not blocking.  Startup tests are better blocking.
                     //var t = Task.Run(() =>
@@ -246,8 +246,8 @@ namespace Impetuosity_Rover.ViewModels
                 {
                     switch (request.RequestType)
                     {
-                        case SteeringRequestType.AdjustBy: TurnBogiesBy(request.Value); break;
-                        case SteeringRequestType.SetTo: TurnBogiesTo(request.Value); break;
+                        case SteeringRequestType.AdjustBy: TurnBogiesBy(request.SteeringValue); break;
+                        case SteeringRequestType.SetTo: TurnBogiesTo(request.SteeringValue); break;
                         case SteeringRequestType.Centre: CentreAllBogies(); break;
                         default:; break;
                     }
@@ -322,10 +322,10 @@ namespace Impetuosity_Rover.ViewModels
 
             try
             {
-                var testOne = new MovementMessageModel() { LeftPower = 0.5f, RightPower = 0.5f, RequestedPowerDuration = DateTimeOffset.MinValue.AddMilliseconds(500) };
+                var testOne = new MovementMessageModel() { LeftPower = 0.5f, RightPower = 0.5f, RequestedPowerDuration = TimeSpan.FromMilliseconds(500) };
                 SetMotorPower(ref testOne);
 
-                var testTwo = new MovementMessageModel() { LeftPower = -0.5f, RightPower = -0.5f, RequestedPowerDuration = DateTimeOffset.MinValue.AddMilliseconds(500) };
+                var testTwo = new MovementMessageModel() { LeftPower = -0.5f, RightPower = -0.5f, RequestedPowerDuration = TimeSpan.FromMilliseconds(500) };
                 SetMotorPower(ref testTwo);
 
                 result = true;
