@@ -9,7 +9,6 @@ using Meadow.Foundation;
 using System.Net;
 using System.IO;
 using System.Threading;
-using LitJson;
 using System.Collections.Generic;
 
 namespace Impetuosity_Rover.ViewModels
@@ -126,7 +125,6 @@ namespace Impetuosity_Rover.ViewModels
                 try
                 {
                     var model = new MovementMessageModel();
-                    //var model = JsonMapper.ToObject<MovementMessageModel>(bodyText);
                     SSJSONStringToObject(bodyText, model);
 
                     if (model != null)
@@ -201,9 +199,8 @@ namespace Impetuosity_Rover.ViewModels
                     try
                     {
                         var model = new SteeringMessageModel();
-
-                        //var model = JsonMapper.ToObject<SteeringMessageModel>(bodyText);
                         SSJSONStringToObject(bodyText, model);
+
                         if (model != null)
                         {
                             MeadowApp.Current.mainViewModel.messages.Add(model);
@@ -292,11 +289,13 @@ namespace Impetuosity_Rover.ViewModels
             try
             {
                 json = json.Substring(2, json.Length - 3);
-                string conditionOne = "\":";
-                string conditionTwo = ",\"";
+                string splitConditionOne = "\":";
+                string splitConditionTwo = ",\"";
 
-                var conditions = new string[2] { conditionOne, conditionTwo };
-                var parts = json.Split(conditions, StringSplitOptions.RemoveEmptyEntries);
+                char quotationMark = '"';
+
+                var splitConditions = new string[2] { splitConditionOne, splitConditionTwo };
+                var parts = json.Split(splitConditions, StringSplitOptions.RemoveEmptyEntries);
 
                 int i = 0;
 
@@ -307,12 +306,12 @@ namespace Impetuosity_Rover.ViewModels
                     //if (mod != 0 &&
 
                     if (!string.IsNullOrEmpty(parts[i]) &&
-                        parts[i][0].Equals("\""))
+                        parts[i][0].Equals(quotationMark))
                     {
                         parts[i] = parts[i].Substring(1, parts[i].Length - 2);
                     }
 
-                    var ind = parts[1].IndexOf("\"");
+                    var ind = parts[i].IndexOf(quotationMark);
                     if (ind > 0)
                     {
                         parts[i] = parts[i].Substring(0, ind);
@@ -389,8 +388,23 @@ namespace Impetuosity_Rover.ViewModels
                         }
 
                         if (typePropertyMatchingKey.PropertyType == typeof(TimeSpan))
-                        {                            
-                            typePropertyMatchingKey.SetValue(destinationObject, TimeSpan.Parse(keyValuePair.Value), null);
+                        {
+                            //string str = keyValuePair.Value.ToString();
+                           // int h = Convert.ToInt32(str.Substring(0, 2));
+                            //int m = Convert.ToInt32(str.Substring(3, 2));
+                            //int s = Convert.ToInt32(str.Substring(6, 2));
+                            //int ms = Convert.ToInt32(str.Substring(9, 4));
+
+                            //TimeSpan t = new TimeSpan(
+                            //        0,h,m,s,ms);
+
+                            //typePropertyMatchingKey.SetValue(
+                            //    destinationObject,
+                            //    t, null);
+                            var t = TimeSpan.Parse(keyValuePair.Value);
+                            typePropertyMatchingKey.SetValue(
+                                destinationObject,
+                                t, null);
                         }
 
                         if (typePropertyMatchingKey.PropertyType == typeof(DateTimeOffset))

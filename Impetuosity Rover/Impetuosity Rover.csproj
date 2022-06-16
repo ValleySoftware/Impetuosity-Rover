@@ -6,7 +6,6 @@
     <AssemblyName>App</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="LitJson" Version="0.18.0" />
     <PackageReference Include="Meadow" Version="0.31.1" />
     <PackageReference Include="Meadow.F7" Version="0.31.1" />
     <PackageReference Include="Meadow.Foundation" Version="0.33.1" />

@@ -220,8 +220,8 @@ namespace Impetuosity_Rover.ViewModels
             if (angle >= -70 &&
                 angle <= 70)
             {
-                TurnFrontBogiesTo(angle);
-                TurnRearBogiesTo(angle);
+                TurnFrontBogiesTo(leftFrontBogie.CentreAngle + angle);
+                TurnRearBogiesTo(leftFrontBogie.CentreAngle - angle);
             }
         }
 

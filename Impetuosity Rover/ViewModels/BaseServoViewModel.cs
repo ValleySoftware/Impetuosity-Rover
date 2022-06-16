@@ -140,6 +140,6 @@ namespace Impetuosity_Rover.ViewModels
             Position = CentreAngle;
         }
 
-        private static float CentreAngle = 90f;
+        public float CentreAngle = 90f;
     }
 }
