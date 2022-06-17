@@ -10,14 +10,15 @@ using System.Net;
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
+using Impetuosity_Rover.ViewModels.Primary;
 
-namespace Impetuosity_Rover.ViewModels
+namespace Impetuosity_Rover.ViewModels.Comms
 {
     public class CommunicationsViewModel : ValleyBaseViewModel
     {
         MapleServer mapleServer;
         int commsPort = 5417;
-        
+
 
         public CommunicationsViewModel(string name) : base(name)
         {
@@ -34,7 +35,7 @@ namespace Impetuosity_Rover.ViewModels
             var tokenSource = new CancellationTokenSource();
             var token = tokenSource.Token;
 
-            Task t = Task.Run(async() =>
+            Task t = Task.Run(async () =>
             {
                 mainViewModel.ShowDebugMessage(this, "WiFi status flash starting", ErrorLoggingThreshold.debug);
 
@@ -48,8 +49,8 @@ namespace Impetuosity_Rover.ViewModels
                 }
 
                 mainViewModel.ShowDebugMessage(
-                    this, 
-                    "WiFi status flash stopping", 
+                    this,
+                    "WiFi status flash stopping",
                     ErrorLoggingThreshold.debug);
             }, token);
 
@@ -58,7 +59,7 @@ namespace Impetuosity_Rover.ViewModels
                 var connectionResult =
                     await MeadowApp.Device.WiFiAdapter.Connect(
                         Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
-                
+
                 if (connectionResult.ConnectionStatus != ConnectionStatus.Success)
                 {
                     throw new Exception($"Cannot connect to network: {connectionResult.ConnectionStatus}");
@@ -119,8 +120,8 @@ namespace Impetuosity_Rover.ViewModels
 
             if (Context.Request.HasEntityBody)
             {
-                bodyText = ReadBodyFromStream(this.Context.Request);
-                Console.WriteLine($"Body is {bodyText} ");                
+                bodyText = ReadBodyFromStream(Context.Request);
+                Console.WriteLine($"Body is {bodyText} ");
 
                 try
                 {
@@ -139,12 +140,12 @@ namespace Impetuosity_Rover.ViewModels
                 catch (Exception deserializeEx)
                 {
                     Console.WriteLine("movement request deserialization error " + deserializeEx.Message, true);
-                    result = new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ParseError);
+                    result = new StatusCodeResult(valleyMapleError_ParseError);
                 }
             }
             else
             {
-                return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_UnknownError);
+                return new StatusCodeResult(valleyMapleError_UnknownError);
             }
 
 
@@ -162,14 +163,14 @@ namespace Impetuosity_Rover.ViewModels
                 }
                 else
                 {
-                    return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ActionError);
+                    return new StatusCodeResult(valleyMapleError_ActionError);
                 }
-                
+
             }
             catch (Exception parseException)
             {
                 Console.WriteLine("movement request error " + parseException.Message, true);
-                return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ParseError);
+                return new StatusCodeResult(valleyMapleError_ParseError);
             }
 
         }
@@ -193,7 +194,7 @@ namespace Impetuosity_Rover.ViewModels
 
                 if (Context.Request.HasEntityBody)
                 {
-                    bodyText = ReadBodyFromStream(this.Context.Request);
+                    bodyText = ReadBodyFromStream(Context.Request);
                     Console.WriteLine($"Body is {bodyText} ");
 
                     try
@@ -213,12 +214,12 @@ namespace Impetuosity_Rover.ViewModels
                     catch (Exception deserializeEx)
                     {
                         Console.WriteLine("steering request deserialization error " + deserializeEx.Message, true);
-                        result = new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ParseError);
+                        result = new StatusCodeResult(valleyMapleError_ParseError);
                     }
                 }
                 else
                 {
-                    return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_UnknownError);
+                    return new StatusCodeResult(valleyMapleError_UnknownError);
                 }
 
 
@@ -232,20 +233,20 @@ namespace Impetuosity_Rover.ViewModels
             {
                 try
                 {
-                        if (MeadowApp.Current.mainViewModel.Movement.TurnBogies(ref request))
-                        {
-                            return new OkResult();
-                        }
-                        else
-                        {
-                            return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ActionError);
-                        }
+                    if (MeadowApp.Current.mainViewModel.Movement.TurnBogies(ref request))
+                    {
+                        return new OkResult();
+                    }
+                    else
+                    {
+                        return new StatusCodeResult(valleyMapleError_ActionError);
+                    }
 
                 }
                 catch (Exception parseException)
                 {
                     Console.WriteLine("steering request error " + parseException.Message, true);
-                    return new StatusCodeResult(Enumerations.Enumerations.valleyMapleError_ParseError);
+                    return new StatusCodeResult(valleyMapleError_ParseError);
                 }
 
             }
@@ -329,9 +330,9 @@ namespace Impetuosity_Rover.ViewModels
                 {
                     try
                     {
-                        var element = 
+                        var element =
                             new KeyValuePair<string, string>(
-                                parts[buildListLoop], 
+                                parts[buildListLoop],
                                 parts[buildListLoop + 1]);
                         result.Add(element);
                     }
@@ -343,7 +344,7 @@ namespace Impetuosity_Rover.ViewModels
                     buildListLoop = buildListLoop + 2;
                 }
 
-                    return result;
+                return result;
             }
             catch (Exception ex)
             {
@@ -352,7 +353,7 @@ namespace Impetuosity_Rover.ViewModels
         }
 
         private static MessageBaseModel KeyValuePairListToObject(
-            List<KeyValuePair<string, string>> kvpList, 
+            List<KeyValuePair<string, string>> kvpList,
             object destinationObject)
         {
             if (destinationObject == null)
@@ -368,7 +369,7 @@ namespace Impetuosity_Rover.ViewModels
                 {
                     var typePropertyMatchingKey = objType.GetProperty(keyValuePair.Key);
 
-                    if (typePropertyMatchingKey != null && 
+                    if (typePropertyMatchingKey != null &&
                         keyValuePair.Value != null)
                     {
 
@@ -390,7 +391,7 @@ namespace Impetuosity_Rover.ViewModels
                         if (typePropertyMatchingKey.PropertyType == typeof(TimeSpan))
                         {
                             //string str = keyValuePair.Value.ToString();
-                           // int h = Convert.ToInt32(str.Substring(0, 2));
+                            // int h = Convert.ToInt32(str.Substring(0, 2));
                             //int m = Convert.ToInt32(str.Substring(3, 2));
                             //int s = Convert.ToInt32(str.Substring(6, 2));
                             //int ms = Convert.ToInt32(str.Substring(9, 4));
@@ -445,12 +446,12 @@ namespace Impetuosity_Rover.ViewModels
                 catch (Exception e)
                 {
                     Console.WriteLine(
-                        "property value error on " + 
-                        keyValuePair.Key + 
-                        " - " + 
-                        keyValuePair.Value + 
-                        " : " + 
-                        e.Message, 
+                        "property value error on " +
+                        keyValuePair.Key +
+                        " - " +
+                        keyValuePair.Value +
+                        " : " +
+                        e.Message,
                         true);
                 }
             }

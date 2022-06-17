@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using static Impetuosity_Rover.Enumerations.Enumerations;
 
-namespace Impetuosity_Rover.ViewModels
+namespace Impetuosity_Rover.ViewModels.Movement
 {
     public class BogieViewModel : BaseServoViewModel
     {
@@ -18,24 +18,26 @@ namespace Impetuosity_Rover.ViewModels
         }
 
         public override bool Init(
-            ref Pca9685 pca, 
-            int servoPortIndex, 
+            ref Pca9685 pca,
+            int servoPortIndex,
             ref ServoConfig servoConfig,
             double alignmentModifier = 0,
             bool isReversed = false,
             float minDegrees = 10,
             float maxDegrees = 170,
-            float centreAngle = 90)
+            float centreAngle = 90,
+            float defaultAngle = 90)
         {
-            return base.Init(                
-                ref pca, 
-                servoPortIndex, 
+            return base.Init(
+                ref pca,
+                servoPortIndex,
                 ref servoConfig,
                 alignmentModifier,
                 isReversed,
                 minDegrees,
                 maxDegrees,
-                centreAngle);
+                centreAngle,
+                defaultAngle);
         }
 
         public void Test()

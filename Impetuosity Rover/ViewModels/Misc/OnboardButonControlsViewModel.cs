@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Impetuosity_Rover.ViewModels.Primary;
 using Meadow.Foundation.Sensors.Buttons;
 using static Impetuosity_Rover.Enumerations.Enumerations;
 
-namespace Impetuosity_Rover.ViewModels
+namespace Impetuosity_Rover.ViewModels.Misc
 {
     public class OnboardButonControlsViewModel : ValleyBaseViewModel
     {

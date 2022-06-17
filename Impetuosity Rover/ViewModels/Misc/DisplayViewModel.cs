@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Impetuosity_Rover.ViewModels.Primary;
 using Meadow.Foundation.Displays.Ssd130x;
 using Meadow.Foundation.Graphics;
 using Meadow.Hardware;
 
-namespace Impetuosity_Rover.ViewModels
+namespace Impetuosity_Rover.ViewModels.Misc
 {
     public class DisplayViewModel : ValleyBaseViewModel
     {
@@ -21,7 +22,7 @@ namespace Impetuosity_Rover.ViewModels
         {
             display = new Ssd1306(i2CBus,
                 address: 60,
-                displayType: Ssd1306.DisplayType.OLED128x32);
+                displayType: Ssd130xBase.DisplayType.OLED128x32);
 
             graphics = new MicroGraphics(display);
             graphics.Clear();

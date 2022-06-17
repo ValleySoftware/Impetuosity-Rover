@@ -1,4 +1,5 @@
-﻿using Meadow.Foundation.ICs.IOExpanders;
+﻿using Impetuosity_Rover.ViewModels.Primary;
+using Meadow.Foundation.ICs.IOExpanders;
 using Meadow.Foundation.Servos;
 using Meadow.Hardware;
 using System;
@@ -7,7 +8,7 @@ using System.Text;
 using System.Threading;
 using static Impetuosity_Rover.Enumerations.Enumerations;
 
-namespace Impetuosity_Rover.ViewModels
+namespace Impetuosity_Rover.ViewModels.Movement
 {
 
     public partial class BaseServoViewModel : ValleyBaseViewModel
@@ -22,6 +23,7 @@ namespace Impetuosity_Rover.ViewModels
         private float _minDegrees;
         private float _maxDegrees;
         private float _centreAngle;
+        private float _defaultAngle;
 
         public BaseServoViewModel(string name) : base(name)
         {
@@ -29,26 +31,28 @@ namespace Impetuosity_Rover.ViewModels
         }
 
         public virtual bool Init(
-            ref Pca9685 pca, 
-            int servoPortIndex, 
+            ref Pca9685 pca,
+            int servoPortIndex,
             ref ServoConfig servoConfig,
             double alignmentModifier,
             bool isReversed,
             float minDegrees,
             float maxDegrees,
-            float centreAngle)
-        { 
+            float centreAngle, 
+            float defaultAngle)
+        {
             try
             {
                 _pca = pca;
                 _alignmentModifier = alignmentModifier;
                 _port = pca.CreatePwmPort(Convert.ToByte(servoPortIndex));
                 _servo = new Servo(_port, servoConfig);
-                _position = 90;
                 _isReversed = isReversed;
                 _minDegrees = minDegrees;
                 _maxDegrees = maxDegrees;
                 _centreAngle = centreAngle;
+                _defaultAngle = defaultAngle;
+                _position = defaultAngle;
 
                 RotateToPosition();
 
@@ -69,6 +73,23 @@ namespace Impetuosity_Rover.ViewModels
             {
                 _alignmentModifier = value;
                 Position = _position; //this is to adjust immediatly.
+            }
+        }
+
+        public float CentreAngle
+        {
+            get => _centreAngle;
+            set
+            {
+                _centreAngle = value;
+            }
+        }
+        public float DefaultAngle
+        {
+            get => _defaultAngle;
+            set
+            {
+                _defaultAngle = value;
             }
         }
 
@@ -137,9 +158,21 @@ namespace Impetuosity_Rover.ViewModels
 
         public void CentreBogie()
         {
-            Position = CentreAngle;
+            Position = _centreAngle;
         }
 
-        public float CentreAngle = 90f;
+        public void MoveToDefaultAngle()
+        {
+            Position = DefaultAngle;
+        }
+
+        public static ServoConfig S50 = new ServoConfig(
+            new Meadow.Units.Angle(0), 
+            new Meadow.Units.Angle(180), 
+            750, 
+            2500, 
+            60);
+
     }
+
 }

@@ -1,4 +1,4 @@
-﻿using Impetuosity_Rover.ViewModels;
+﻿using Impetuosity_Rover.ViewModels.Primary;
 using Meadow;
 using Meadow.Devices;
 using System;

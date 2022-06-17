@@ -1,4 +1,5 @@
 ﻿using Impetuosity_Rover.Models;
+using Impetuosity_Rover.ViewModels.Primary;
 using Meadow;
 using Meadow.Devices;
 using Meadow.Foundation;
@@ -12,7 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using static Impetuosity_Rover.Enumerations.Enumerations;
 
-namespace Impetuosity_Rover.ViewModels
+namespace Impetuosity_Rover.ViewModels.Movement
 {
     public class MovementViewModel : ValleyBaseViewModel
     {
@@ -22,11 +23,15 @@ namespace Impetuosity_Rover.ViewModels
         private BogieViewModel rightFrontBogie;
         private BogieViewModel rightRearBogie;
         private bool _bogiesTransitioning = false;
-        
+
         private DrivePowerViewModel leftMotorPower;
         private DrivePowerViewModel rightMotorPower;
 
-        public MovementViewModel(string name) :base(name)
+        private PanTiltViewModel _panTilt;
+
+        private Pca9685 _pca;
+
+        public MovementViewModel(string name) : base(name)
         {
 
         }
@@ -53,13 +58,13 @@ namespace Impetuosity_Rover.ViewModels
                     {
                         parts[i] = parts[i].Substring(1, parts[i].Length - 2);
                     }
-                    
+
                     var ind = parts[1].IndexOf("\"");
                     if (ind > 0)
                     {
                         parts[i] = parts[i].Substring(0, ind);
                     }
-                    
+
                     parts[i] = parts[i].Trim();
                 }
             }
@@ -75,43 +80,79 @@ namespace Impetuosity_Rover.ViewModels
         {
             mainViewModel.ShowDebugMessage(this, "Prepare Servo Conf");
 
+            _pca = pca;
+
             ServoConfig SG51Conf = new ServoConfig
             (
-                minimumAngle : new Meadow.Units.Angle(0, Meadow.Units.Angle.UnitType.Degrees),
-                maximumAngle : new Meadow.Units.Angle(180, Meadow.Units.Angle.UnitType.Degrees),
-                minimumPulseDuration : 1000,
+                minimumAngle: new Meadow.Units.Angle(0, Meadow.Units.Angle.UnitType.Degrees),
+                maximumAngle: new Meadow.Units.Angle(180, Meadow.Units.Angle.UnitType.Degrees),
+                minimumPulseDuration: 1000,
                 //maximumPulseDuration : 2750,
                 maximumPulseDuration: 2000,
-                frequency : 60
+                frequency: 60
             ); //Some experimenting done here to get rotation kinda close...
 
-            mainViewModel.ShowDebugMessage(this, "Instantiate Bogies", ErrorLoggingThreshold.important);
-            leftFrontBogie = new BogieViewModel("LeftFrontBogie");
-            _bogies.Add(leftFrontBogie);
-            leftRearBogie = new BogieViewModel("LeftRearBogie");
-            _bogies.Add(leftRearBogie);
-            rightFrontBogie = new BogieViewModel("RightFrontBogie");
-            _bogies.Add(rightFrontBogie);
-            rightRearBogie = new BogieViewModel("RightRearBogie");
-            _bogies.Add(rightRearBogie);
+            try
+            {
+                mainViewModel.ShowDebugMessage(this, "Instantiate Bogies", ErrorLoggingThreshold.important);
+                leftFrontBogie = new BogieViewModel("LeftFrontBogie");
+                _bogies.Add(leftFrontBogie);
+                leftRearBogie = new BogieViewModel("LeftRearBogie");
+                _bogies.Add(leftRearBogie);
+                rightFrontBogie = new BogieViewModel("RightFrontBogie");
+                _bogies.Add(rightFrontBogie);
+                rightRearBogie = new BogieViewModel("RightRearBogie");
+                _bogies.Add(rightRearBogie);
 
-            mainViewModel.ShowDebugMessage(this, "Init Bogies", ErrorLoggingThreshold.important);
-            leftFrontBogie.Init(ref pca, 1, ref SG51Conf, -15);
-            leftRearBogie.Init(ref pca, 0, ref SG51Conf, -15, true);
-            rightFrontBogie.Init(ref pca, 15, ref SG51Conf, -20);
-            rightRearBogie.Init(ref pca, 14, ref SG51Conf, 0, true);
+                mainViewModel.ShowDebugMessage(this, "Init Bogies", ErrorLoggingThreshold.important);
+                leftFrontBogie.Init(ref _pca, 1, ref SG51Conf, -15);
+                leftRearBogie.Init(ref _pca, 0, ref SG51Conf, -15, true);
+                rightFrontBogie.Init(ref _pca, 15, ref SG51Conf, -20);
+                rightRearBogie.Init(ref _pca, 14, ref SG51Conf, 0, true);
+            }
+            catch (Exception exb)
+            {
+                mainViewModel.ShowDebugMessage(this,
+                    exb.ToString(),
+                    ErrorLoggingThreshold.exception);
+                mainViewModel.onboardLed.SetColor(Color.Red);
 
-            mainViewModel.ShowDebugMessage(this, "Init Drive Motor Power", ErrorLoggingThreshold.important);
-            leftMotorPower = new DrivePowerViewModel("LeftDriveMotors");
-            leftMotorPower.Init(_device.Pins.D13, _device.Pins.D12, _device.Pins.D11);
+            }
 
-            rightMotorPower = new DrivePowerViewModel("RightDriveMotors");
-            rightMotorPower.Init(_device.Pins.D09, _device.Pins.D10, _device.Pins.D15);
+            try
+            {
+                mainViewModel.ShowDebugMessage(this, "Init Drive Motor Power", ErrorLoggingThreshold.important);
+                leftMotorPower = new DrivePowerViewModel("LeftDriveMotors");
+                leftMotorPower.Init(_device.Pins.D13, _device.Pins.D12, _device.Pins.D11);
+
+                rightMotorPower = new DrivePowerViewModel("RightDriveMotors");
+                rightMotorPower.Init(_device.Pins.D09, _device.Pins.D10, _device.Pins.D15);
+            }
+            catch (Exception exmp)
+            {
+                mainViewModel.ShowDebugMessage(this,
+                    exmp.ToString(),
+                    ErrorLoggingThreshold.exception);
+                mainViewModel.onboardLed.SetColor(Color.Red);
+            }
+
+            try
+            {
+                _panTilt = new PanTiltViewModel("Pan Tilt Control");
+                _panTilt.Init(ref _pca);
+            }
+            catch (Exception expt)
+            {
+                mainViewModel.ShowDebugMessage(this,
+                    expt.ToString(),
+                    ErrorLoggingThreshold.exception);
+                mainViewModel.onboardLed.SetColor(Color.Red);
+            }
 
             Test(requestedTesting);
         }
 
-        public bool SetMotorPower(ref MovementMessageModel request) 
+        public bool SetMotorPower(ref MovementMessageModel request)
         {
             var result = false;
 
@@ -119,12 +160,12 @@ namespace Impetuosity_Rover.ViewModels
             {
                 leftMotorPower.SetMotorPower(request.LeftPower);
                 rightMotorPower.SetMotorPower(request.RightPower);
-                request.RequestStatus = Enumerations.Enumerations.MessageStatus.completedPendingConfirmation;
+                request.RequestStatus = MessageStatus.completedPendingConfirmation;
                 result = true;
 
                 request.RequestPerformedStamp = DateTimeOffset.Now;
 
-                if (request.RequestedPowerDuration == null || 
+                if (request.RequestedPowerDuration == null ||
                     !request.RequestedPowerDuration.Equals(TimeSpan.MinValue))
                 {
                     if (request.RequestedPowerDuration == null)
@@ -137,8 +178,8 @@ namespace Impetuosity_Rover.ViewModels
                     //Run the function as a thread.  This way it can be blocking, or not blocking.  Startup tests are better blocking.
                     //var t = Task.Run(() =>
                     //{
-                        Thread.Sleep(duration);
-                        Stop();
+                    Thread.Sleep(duration);
+                    Stop();
                     //});
                 }
 
@@ -155,7 +196,7 @@ namespace Impetuosity_Rover.ViewModels
         public void Stop()
         {
             try
-            { 
+            {
                 leftMotorPower.Stop();
                 rightMotorPower.Stop();
             }
@@ -196,7 +237,7 @@ namespace Impetuosity_Rover.ViewModels
             }
             catch (Exception ex)
             {
-                mainViewModel.ShowDebugMessage(this, "Turn All Error: " + ex.Message, ErrorLoggingThreshold.exception );
+                mainViewModel.ShowDebugMessage(this, "Turn All Error: " + ex.Message, ErrorLoggingThreshold.exception);
                 MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
             }
 
@@ -240,7 +281,7 @@ namespace Impetuosity_Rover.ViewModels
                 _bogiesTransitioning = true;
 
                 request.RequestPerformedStamp = DateTimeOffset.Now;
-                request.RequestStatus = Enumerations.Enumerations.MessageStatus.completedPendingConfirmation;
+                request.RequestStatus = MessageStatus.completedPendingConfirmation;
 
                 try
                 {
@@ -290,7 +331,8 @@ namespace Impetuosity_Rover.ViewModels
                             {
                                 result = TestBogies(requestedTesting);
                             }
-                        } break;
+                        }
+                        break;
                 }
 
             }

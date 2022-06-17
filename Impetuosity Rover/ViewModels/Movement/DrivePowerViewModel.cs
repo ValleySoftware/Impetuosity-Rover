@@ -1,11 +1,12 @@
-﻿using Meadow.Foundation.Motors;
+﻿using Impetuosity_Rover.ViewModels.Primary;
+using Meadow.Foundation.Motors;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using static Impetuosity_Rover.Enumerations.Enumerations;
 
-namespace Impetuosity_Rover.ViewModels
+namespace Impetuosity_Rover.ViewModels.Movement
 {
     public class DrivePowerViewModel : ValleyBaseViewModel
     {
@@ -18,18 +19,18 @@ namespace Impetuosity_Rover.ViewModels
         }
 
         public bool Init(
-            Meadow.Hardware.IPin HBridgePinA, 
-            Meadow.Hardware.IPin HBridgePinB, 
+            Meadow.Hardware.IPin HBridgePinA,
+            Meadow.Hardware.IPin HBridgePinB,
             Meadow.Hardware.IPin HBridgePinEnable)
         {
 
             try
             {
                 _hBridge = new HBridgeMotor(
-                    device : _device,
-                    a1Pin :HBridgePinA,
-                    a2Pin : HBridgePinB, 
-                    enablePin : HBridgePinEnable);
+                    device: _device,
+                    a1Pin: HBridgePinA,
+                    a2Pin: HBridgePinB,
+                    enablePin: HBridgePinEnable);
 
                 _hBridge.IsNeutral = true;
 
@@ -71,7 +72,7 @@ namespace Impetuosity_Rover.ViewModels
             }
             catch (Exception ex)
             {
-                result =  false;
+                result = false;
             }
 
             return result;

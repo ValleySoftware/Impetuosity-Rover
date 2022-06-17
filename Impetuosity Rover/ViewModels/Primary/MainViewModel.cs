@@ -1,4 +1,7 @@
 ﻿using Impetuosity_Rover.Models;
+using Impetuosity_Rover.ViewModels.Comms;
+using Impetuosity_Rover.ViewModels.Misc;
+using Impetuosity_Rover.ViewModels.Movement;
 using Meadow.Foundation;
 using Meadow.Foundation.ICs.IOExpanders;
 using Meadow.Foundation.Leds;
@@ -10,7 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using static Impetuosity_Rover.Enumerations.Enumerations;
 
-namespace Impetuosity_Rover.ViewModels
+namespace Impetuosity_Rover.ViewModels.Primary
 {
     public class MainViewModel : ValleyBaseViewModel
     {
@@ -37,6 +40,11 @@ namespace Impetuosity_Rover.ViewModels
 
         public List<MessageBaseModel> messages;
 
+
+        private LightsViewModel _lights;
+        private SensorsViewModel _sensors;
+
+
         public MainViewModel(string name) : base(name)
         {
             ShowDebugMessage(this, "Initialize LED for debugging.");
@@ -56,11 +64,11 @@ namespace Impetuosity_Rover.ViewModels
 
             AutoResetEvent autoResetEvent = new AutoResetEvent(true);
             debugLogTimer = new Timer(
-                new TimerCallback(ScanDebugQueueForNewMessages), 
+                new TimerCallback(ScanDebugQueueForNewMessages),
                 autoResetEvent,
-                TimeSpan.FromSeconds(0), 
+                TimeSpan.FromSeconds(0),
                 TimeSpan.FromSeconds(1));
-            
+
         }
 
         public bool Init()
@@ -82,7 +90,7 @@ namespace Impetuosity_Rover.ViewModels
 
                 ShowDebugMessage(this, "Create PCA9685");
                 pca9685 = new Pca9685(i2CBus, 0x40, i2cFrequency);
-               
+
                 ShowDebugMessage(this, "Initialize PCA9685");
                 pca9685.Initialize();
 
@@ -106,13 +114,47 @@ namespace Impetuosity_Rover.ViewModels
 
                 try
                 {
+                    ShowDebugMessage(this, "Init Comms");
+                    Display.ShowMessage(new List<string>() { "Comms Startup in progress" });
                     comms = new CommunicationsViewModel("comms");
                     comms.Init();
                 }
-                catch (Exception ex) 
-                { 
-                    ShowDebugMessage(this, 
-                        ex.ToString(), 
+                catch (Exception ex)
+                {
+                    ShowDebugMessage(this,
+                        ex.ToString(),
+                        ErrorLoggingThreshold.exception);
+                    onboardLed.SetColor(Color.Red);
+                    return false;
+                }
+
+                try
+                {
+                    ShowDebugMessage(this, "Init Sensors");
+                    Display.ShowMessage(new List<string>() { "Sensor Startup in progress" });
+                    _sensors = new SensorsViewModel("Sensors Controller");
+                    _sensors.Init(ref i2CBus);
+                }
+                catch (Exception ex)
+                {
+                    ShowDebugMessage(this,
+                        ex.ToString(),
+                        ErrorLoggingThreshold.exception);
+                    onboardLed.SetColor(Color.Red);
+                    return false;
+                }
+
+                try
+                {
+                    ShowDebugMessage(this, "Init Lights");
+                    Display.ShowMessage(new List<string>() { "Lights Startup in progress" });
+                    _lights = new LightsViewModel("Lights Controller");
+                    _lights.Init();
+                }
+                catch (Exception ex)
+                {
+                    ShowDebugMessage(this,
+                        ex.ToString(),
                         ErrorLoggingThreshold.exception);
                     onboardLed.SetColor(Color.Red);
                     return false;
@@ -123,8 +165,8 @@ namespace Impetuosity_Rover.ViewModels
             catch (Exception ex)
             {
                 ShowDebugMessage(
-                    this, 
-                    "Initialize error: " + ex.Message, 
+                    this,
+                    "Initialize error: " + ex.Message,
                     ErrorLoggingThreshold.exception);
                 onboardLed.SetColor(Color.Red);
                 return false;
