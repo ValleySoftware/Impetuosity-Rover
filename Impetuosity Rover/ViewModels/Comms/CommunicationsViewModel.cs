@@ -28,31 +28,9 @@ namespace Impetuosity_Rover.ViewModels.Comms
         {
             var success = false;
 
-            mainViewModel.ShowDebugMessage(this, "Starting WiFi", ErrorLoggingThreshold.important);
+            mainViewModel.MasterStatus.ShowDebugMessage(this, "Starting WiFi", ErrorLoggingThreshold.important);
 
-            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Yellow);
-
-            var tokenSource = new CancellationTokenSource();
-            var token = tokenSource.Token;
-
-            Task t = Task.Run(async () =>
-            {
-                mainViewModel.ShowDebugMessage(this, "WiFi status flash starting", ErrorLoggingThreshold.debug);
-
-                while (!token.IsCancellationRequested)
-                {
-                    MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-
-                    MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-                }
-
-                mainViewModel.ShowDebugMessage(
-                    this,
-                    "WiFi status flash stopping",
-                    ErrorLoggingThreshold.debug);
-            }, token);
+            mainViewModel.MasterStatus.CommsStatus = ComponentStatus.Initialising;
 
             try
             {
@@ -62,6 +40,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
 
                 if (connectionResult.ConnectionStatus != ConnectionStatus.Success)
                 {
+                    mainViewModel.MasterStatus.CommsStatus = ComponentStatus.Error;
                     throw new Exception($"Cannot connect to network: {connectionResult.ConnectionStatus}");
                 }
 
@@ -71,32 +50,27 @@ namespace Impetuosity_Rover.ViewModels.Comms
                     advertise: true
                 );
                 mapleServer.DeviceName = "Impetuosity Rover";
-                mainViewModel.ShowDebugMessage(this, "Starting Maple", ErrorLoggingThreshold.important);
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Starting Maple", ErrorLoggingThreshold.important);
                 mapleServer.Start();
                 success = true;
+
+                mainViewModel.MasterStatus.CommsStatus = ComponentStatus.Ready;
             }
             catch (Exception ex)
             {
                 success = false;
-                mainViewModel.ShowDebugMessage(this, "Comms Init error " + ex.Message, ErrorLoggingThreshold.exception);
+                mainViewModel.MasterStatus.CommsStatus = ComponentStatus.Error;
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Comms Init error " + ex.Message, ErrorLoggingThreshold.exception);
             }
-
-            //Request cancellation.
-            tokenSource.Cancel();
-
-            Thread.Sleep(2500);
-            // Cancellation should have happened, so call Dispose.
-            tokenSource.Dispose();
 
             if (success)
             {
-                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
-                mainViewModel.ShowDebugMessage(this, "WiFI and Maple startup completed.", ErrorLoggingThreshold.important);
-                mainViewModel.Display.ShowMessage(new List<string>() { "Startup Complete" });
+                mainViewModel.MasterStatus.CommsStatus = ComponentStatus.Ready;
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "WiFI and Maple startup completed.", ErrorLoggingThreshold.important);
             }
             else
             {
-                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
+                mainViewModel.MasterStatus.CommsStatus = ComponentStatus.Error;
             }
 
             return success;
@@ -226,8 +200,6 @@ namespace Impetuosity_Rover.ViewModels.Comms
 
                 return result;
             }
-
-
 
             private IActionResult RequestChangeSteering(ref SteeringMessageModel request)
             {

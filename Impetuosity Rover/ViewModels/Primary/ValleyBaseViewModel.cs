@@ -12,6 +12,8 @@ namespace Impetuosity_Rover.ViewModels.Primary
     {
         public ErrorLoggingThreshold debugThreshhold = ErrorLoggingThreshold.important;
 
+        private bool _isReady = false;
+
         protected MeadowApp _appRoot => MeadowApp.Current;
         public F7FeatherV2 _device => MeadowApp.Device;
 
@@ -25,6 +27,12 @@ namespace Impetuosity_Rover.ViewModels.Primary
         public string Name
         {
             get => _name;
+        }
+
+        public bool IsReady
+        {
+            get => _isReady;
+            set => _isReady = value;
         }
 
         public MainViewModel mainViewModel => MeadowApp.Current.mainViewModel;

@@ -8,7 +8,8 @@ namespace Impetuosity_Rover.ViewModels
 {
     public class MagnometerViewModel : SensorBaseViewModel
     {
-        Hmc5883 _sensor;
+        private Hmc5883 _sensor;
+        private Meadow.Foundation.Spatial.Vector _vector;
 
         public MagnometerViewModel(string name) : base(name)
         {
@@ -22,13 +23,25 @@ namespace Impetuosity_Rover.ViewModels
             _sensor = new Hmc5883(i2CBus);
             _sensor.Updated += _sensor_Updated;
             _sensor.StartUpdating(TimeSpan.FromMilliseconds(250));
+
+            IsReady = true;
         }
 
         private void _sensor_Updated(
             object sender, 
             Meadow.IChangeResult<Meadow.Foundation.Spatial.Vector> e)
         {
-            throw new NotImplementedException();
+            if (!IsReady)
+            {
+                return;
+            }
+
+            _vector = e.New;
+        }
+
+        public Meadow.Foundation.Spatial.Vector CurrentVector
+        {
+            get => _vector;
         }
     }
 }

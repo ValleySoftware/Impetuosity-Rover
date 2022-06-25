@@ -22,7 +22,8 @@ namespace Impetuosity_Rover.Enumerations
             sent, 
             receivedPendingAction, 
             completedPendingConfirmation, 
-            confirmed}
+            confirmed
+        }
         //public enum MessageType { movement };
 
         public enum SteeringRequestType
@@ -46,6 +47,28 @@ namespace Impetuosity_Rover.Enumerations
             exception,
             important,
             debug
+        }
+
+        public enum ComponentStatus
+        {
+            Active,
+            Ready,
+            Initialising,
+            Uninitialised,
+            Warning,
+            Error,
+            CatastrophicError
+        }
+
+        public enum ComponentStatusColours
+        {
+            Green,
+            White,
+            Purple,
+            Blue,
+            Yellow,
+            Orange,
+            Red
         }
     }
 }

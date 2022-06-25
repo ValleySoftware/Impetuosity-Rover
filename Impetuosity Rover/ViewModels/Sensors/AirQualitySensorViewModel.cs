@@ -22,8 +22,10 @@ namespace Impetuosity_Rover.ViewModels
             base.Init(ref i2CBus);
 
             _sensor = new Ccs811(i2CBus);
-            _sensor.Updated += _sensor_Updated; ;
+            _sensor.Updated += _sensor_Updated; 
             _sensor.StartUpdating(TimeSpan.FromSeconds(5));
+
+            IsReady = true;
         }
 
         private void _sensor_Updated(
@@ -32,7 +34,23 @@ namespace Impetuosity_Rover.ViewModels
                 Meadow.Units.Concentration? Co2, 
                 Meadow.Units.Concentration? Voc)> e)
         {
-            throw new NotImplementedException();
+            if (!IsReady)
+            {
+                return;
+            }
+
+            _Co2 = e.New.Co2;
+            _Voc = e.New.Voc;
+        }
+
+        public Meadow.Units.Concentration? CurrentCo2
+        {
+            get => _Co2;
+        }
+
+        public Meadow.Units.Concentration? CurrentVoc
+        {
+            get => _Voc;
         }
     }
 }

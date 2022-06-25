@@ -33,7 +33,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
         public MovementViewModel(string name) : base(name)
         {
-
+            mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Uninitialised;
         }
 
         public static MovementMessageModel ModelFromJSONString(string json)
@@ -78,7 +78,8 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
         public void Init(ref Pca9685 pca, TestMethodology requestedTesting = TestMethodology.none)
         {
-            mainViewModel.ShowDebugMessage(this, "Prepare Servo Conf");
+            mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Initialising;
+            mainViewModel.MasterStatus.ShowDebugMessage(this, "Prepare Servo Conf");
 
             _pca = pca;
 
@@ -94,7 +95,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
             try
             {
-                mainViewModel.ShowDebugMessage(this, "Instantiate Bogies", ErrorLoggingThreshold.important);
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Instantiate Bogies", ErrorLoggingThreshold.important);
                 leftFrontBogie = new BogieViewModel("LeftFrontBogie");
                 _bogies.Add(leftFrontBogie);
                 leftRearBogie = new BogieViewModel("LeftRearBogie");
@@ -104,7 +105,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 rightRearBogie = new BogieViewModel("RightRearBogie");
                 _bogies.Add(rightRearBogie);
 
-                mainViewModel.ShowDebugMessage(this, "Init Bogies", ErrorLoggingThreshold.important);
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Init Bogies", ErrorLoggingThreshold.important);
                 leftFrontBogie.Init(ref _pca, 1, ref SG51Conf, -15);
                 leftRearBogie.Init(ref _pca, 0, ref SG51Conf, -15, true);
                 rightFrontBogie.Init(ref _pca, 15, ref SG51Conf, -20);
@@ -112,16 +113,16 @@ namespace Impetuosity_Rover.ViewModels.Movement
             }
             catch (Exception exb)
             {
-                mainViewModel.ShowDebugMessage(this,
+                mainViewModel.MasterStatus.ShowDebugMessage(this,
                     exb.ToString(),
                     ErrorLoggingThreshold.exception);
-                mainViewModel.onboardLed.SetColor(Color.Red);
+                mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Error;
 
             }
 
             try
             {
-                mainViewModel.ShowDebugMessage(this, "Init Drive Motor Power", ErrorLoggingThreshold.important);
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Init Drive Motor Power", ErrorLoggingThreshold.important);
                 leftMotorPower = new DrivePowerViewModel("LeftDriveMotors");
                 leftMotorPower.Init(_device.Pins.D13, _device.Pins.D12, _device.Pins.D11);
 
@@ -130,10 +131,10 @@ namespace Impetuosity_Rover.ViewModels.Movement
             }
             catch (Exception exmp)
             {
-                mainViewModel.ShowDebugMessage(this,
+                mainViewModel.MasterStatus.ShowDebugMessage(this,
                     exmp.ToString(),
                     ErrorLoggingThreshold.exception);
-                mainViewModel.onboardLed.SetColor(Color.Red);
+                mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Error;
             }
 
             try
@@ -143,17 +144,29 @@ namespace Impetuosity_Rover.ViewModels.Movement
             }
             catch (Exception expt)
             {
-                mainViewModel.ShowDebugMessage(this,
+                mainViewModel.MasterStatus.ShowDebugMessage(this,
                     expt.ToString(),
                     ErrorLoggingThreshold.exception);
-                mainViewModel.onboardLed.SetColor(Color.Red);
+                mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Error;
+            }
+
+            if (mainViewModel.MasterStatus.MovementStatus == ComponentStatus.Initialising)
+            {
+                IsReady = true;
+                mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Ready;
             }
 
             Test(requestedTesting);
+
         }
 
         public bool SetMotorPower(ref MovementMessageModel request)
         {
+            if (!IsReady)
+            {
+                return false;
+            }
+
             var result = false;
 
             try
@@ -187,7 +200,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
             catch (Exception startEx)
             {
                 result = false;
-                mainViewModel.ShowDebugMessage(this, "Set Motor Power error: " + startEx.Message, ErrorLoggingThreshold.exception);
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Set Motor Power error: " + startEx.Message, ErrorLoggingThreshold.exception);
             }
 
             return result;
@@ -195,6 +208,11 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
         public void Stop()
         {
+            if (!IsReady)
+            {
+                return;
+            }
+
             try
             {
                 leftMotorPower.Stop();
@@ -202,31 +220,47 @@ namespace Impetuosity_Rover.ViewModels.Movement
             }
             catch (Exception stopEx)
             {
-                mainViewModel.ShowDebugMessage(this, "Stop error: " + stopEx.Message, ErrorLoggingThreshold.exception);
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Stop error: " + stopEx.Message, ErrorLoggingThreshold.exception);
             }
         }
 
         private void TurnFrontBogiesTo(double angle)
         {
+            if (!IsReady)
+            {
+                return;
+            }
             leftFrontBogie.Position = angle;
             rightFrontBogie.Position = angle;
         }
 
         private void TurnRearBogiesTo(double angle)
         {
+            if (!IsReady)
+            {
+                return;
+            }
             leftRearBogie.Position = angle;
             rightRearBogie.Position = angle;
         }
 
         private void TurnAllToAngle(double desiredAngleInDegrees)
         {
+            if (!IsReady)
+            {
+                return;
+            }
             TurnAllToAngle(desiredAngleInDegrees, TimeSpan.FromMilliseconds(500));
         }
 
         private void TurnAllToAngle(double desiredAngleInDegrees, TimeSpan PauseAfterMovement)
         {
-            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
-            mainViewModel.ShowDebugMessage(this, "Go to " + desiredAngleInDegrees + " degrees");
+            if (!IsReady)
+            {
+                return;
+            }
+            mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Active;
+            mainViewModel.MasterStatus.ShowDebugMessage(this, "Go to " + desiredAngleInDegrees + " degrees");
 
             try
             {
@@ -237,17 +271,21 @@ namespace Impetuosity_Rover.ViewModels.Movement
             }
             catch (Exception ex)
             {
-                mainViewModel.ShowDebugMessage(this, "Turn All Error: " + ex.Message, ErrorLoggingThreshold.exception);
-                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Turn All Error: " + ex.Message, ErrorLoggingThreshold.exception);
+                mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Error;
             }
 
-            mainViewModel.ShowDebugMessage(this, "Sleep " + PauseAfterMovement.Milliseconds + " milliseconds");
+            mainViewModel.MasterStatus.ShowDebugMessage(this, "Sleep " + PauseAfterMovement.Milliseconds + " milliseconds");
             Thread.Sleep(PauseAfterMovement);
-            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
+            mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Ready;
         }
 
         private void CentreAllBogies()
         {
+            if (!IsReady)
+            {
+                return;
+            }
             leftFrontBogie.CentreBogie();
             leftRearBogie.CentreBogie();
             rightFrontBogie.CentreBogie();
@@ -258,6 +296,10 @@ namespace Impetuosity_Rover.ViewModels.Movement
         //Reccommend staying between -70 and +70
         private void TurnBogiesTo(double angle)
         {
+            if (!IsReady)
+            {
+                return;
+            }
             if (angle >= -70 &&
                 angle <= 70)
             {
@@ -268,12 +310,21 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
         private void TurnBogiesBy(double amountToChangeAngleBy)
         {
+            if (!IsReady)
+            {
+                return;
+            }
             TurnFrontBogiesTo(leftFrontBogie.Position + amountToChangeAngleBy);
             TurnRearBogiesTo(leftRearBogie.Position - amountToChangeAngleBy);
         }
 
         public bool TurnBogies(ref SteeringMessageModel request)
         {
+            if (!IsReady)
+            {
+                return false;
+            }
+
             var result = false;
 
             if (!_bogiesTransitioning)
@@ -297,7 +348,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 }
                 catch (Exception broadSteeringRequestException)
                 {
-                    mainViewModel.ShowDebugMessage(this, "BroadSetSteering Error: " + broadSteeringRequestException.Message, ErrorLoggingThreshold.exception);
+                    mainViewModel.MasterStatus.ShowDebugMessage(this, "BroadSetSteering Error: " + broadSteeringRequestException.Message, ErrorLoggingThreshold.exception);
                 }
                 finally
                 {
@@ -411,7 +462,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
         public bool TestBogies(TestMethodology requestedTesting)
         {
             bool success = true;
-            MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Blue);
+            mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Active;
 
             switch (requestedTesting)
             {
@@ -420,6 +471,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 case TestMethodology.thorough: ServoThoroughTest(); break;
                 default: success = true; break;
             }
+            mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Ready;
 
             return success;
         }
@@ -430,7 +482,8 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
             try
             {
-                mainViewModel.ShowDebugMessage(this, "Testing Bogies together");
+                mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Active;
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Testing Bogies together");
                 TurnAllToAngle(10);
                 Thread.Sleep(TimeSpan.FromMilliseconds(250));
                 TurnAllToAngle(90);
@@ -439,8 +492,8 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 Thread.Sleep(TimeSpan.FromMilliseconds(250));
                 TurnAllToAngle(90);
                 Thread.Sleep(TimeSpan.FromMilliseconds(250));
-                MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Green);
-                mainViewModel.ShowDebugMessage(this, "Testing bogies complete");
+                mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Ready;
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Testing bogies complete");
 
                 result = true;
             }
@@ -458,11 +511,11 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
             try
             {
-                mainViewModel.ShowDebugMessage(this, "Testing Individual Bogies");
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Testing Individual Bogies");
 
                 foreach (var element in _bogies)
                 {
-                    mainViewModel.ShowDebugMessage(this, "Testing " + element.Name);
+                    mainViewModel.MasterStatus.ShowDebugMessage(this, "Testing " + element.Name);
                     element.Test();
                     Thread.Sleep(TimeSpan.FromMilliseconds(250));
                 }
@@ -485,7 +538,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
             {
                 //Nut bush?
 
-                mainViewModel.ShowDebugMessage(this, "Shuffle, baby. "); //Play dubstep here
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Shuffle, baby. "); //Play dubstep here
                 while (result)
                 {
                     try
@@ -526,8 +579,8 @@ namespace Impetuosity_Rover.ViewModels.Movement
                     catch (Exception ex)
                     {
                         result = false;
-                        mainViewModel.ShowDebugMessage(this, "Initialize error: " + ex.Message, ErrorLoggingThreshold.exception);
-                        MeadowApp.Current.mainViewModel.onboardLed.SetColor(Color.Red);
+                        mainViewModel.MasterStatus.ShowDebugMessage(this, "Initialize error: " + ex.Message, ErrorLoggingThreshold.exception);
+                        mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Error;
                     }
                 }
 

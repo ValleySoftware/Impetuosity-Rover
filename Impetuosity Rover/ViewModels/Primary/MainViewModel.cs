@@ -16,21 +16,12 @@ using static Impetuosity_Rover.Enumerations.Enumerations;
 namespace Impetuosity_Rover.ViewModels.Primary
 {
     public class MainViewModel : ValleyBaseViewModel
-    {
-
-        public RgbPwmLed onboardLed;
-
-        private Timer debugLogTimer;
-        private bool debugQueueScanActive = false;
+    { 
 
         private readonly TestMethodology startupTestingMethod = TestMethodology.none;
 
-        private List<string> debugQueue = new List<string>();
-
         public MovementViewModel Movement;
-        //private OnboardButonControlsViewModel Buttons;
         private CommunicationsViewModel comms;
-
 
         public DisplayViewModel Display;
         private Pca9685 pca9685;
@@ -40,176 +31,107 @@ namespace Impetuosity_Rover.ViewModels.Primary
 
         public List<MessageBaseModel> messages;
 
-
         private LightsViewModel _lights;
         private SensorsViewModel _sensors;
+
+        private StatusViewModel _masterStatus;
 
 
         public MainViewModel(string name) : base(name)
         {
-            ShowDebugMessage(this, "Initialize LED for debugging.");
-
-            if (onboardLed == null)
-            {
-                onboardLed = new RgbPwmLed(
-                    device: _device,
-                    redPwmPin: _device.Pins.OnboardLedRed,
-                    greenPwmPin: _device.Pins.OnboardLedGreen,
-                    bluePwmPin: _device.Pins.OnboardLedBlue,
-                    new Voltage(3.3f, Voltage.UnitType.Volts),
-                    new Voltage(3.3f, Voltage.UnitType.Volts),
-                    new Voltage(3.3f, Voltage.UnitType.Volts),
-                    Meadow.Peripherals.Leds.IRgbLed.CommonType.CommonAnode);
-            }
-
-            AutoResetEvent autoResetEvent = new AutoResetEvent(true);
-            debugLogTimer = new Timer(
-                new TimerCallback(ScanDebugQueueForNewMessages),
-                autoResetEvent,
-                TimeSpan.FromSeconds(0),
-                TimeSpan.FromSeconds(1));
-
+            _masterStatus = new StatusViewModel("Master Status View Model");
+            _masterStatus.Init();
+            MasterStatus.CoreComponentsStatus = ComponentStatus.Uninitialised;
         }
 
         public bool Init()
         {
+            List<Task> startupTasks = new List<Task>();
+
+            MasterStatus.CoreComponentsStatus = ComponentStatus.Initialising;
+
             try
             {
-                onboardLed.SetColor(Color.Blue);
+                //Create all the viewmodels, but not initialise yet.                
 
                 messages = new List<MessageBaseModel>();
 
-                ShowDebugMessage(this, "Initialize I2C");
+                Display = new DisplayViewModel("Main Display");
+                Movement = new MovementViewModel("MovementViewModel");
+                comms = new CommunicationsViewModel("comms");
+                _sensors = new SensorsViewModel("Sensors Controller");
+                _lights = new LightsViewModel("Lights Controller");
 
+                MasterStatus.ShowDebugMessage(this, "Initialize I2C");
                 i2CBus = _device.CreateI2cBus(I2cBusSpeed.Standard);
 
-                ShowDebugMessage(this, "Init Display");
-                Display = new DisplayViewModel("Main Display");
                 Display.Init(i2CBus);
-                Display.ShowMessage(new List<string>() { "Startup in progress" });
 
-                ShowDebugMessage(this, "Create PCA9685");
+                MasterStatus.ShowDebugMessage(this, "Create PCA9685");
                 pca9685 = new Pca9685(i2CBus, 0x40, i2cFrequency);
-
-                ShowDebugMessage(this, "Initialize PCA9685");
+                MasterStatus.ShowDebugMessage(this, "Initialize PCA9685");
                 pca9685.Initialize();
 
-                ShowDebugMessage(this, "Initialize Master Movement Controller");
-                Movement = new MovementViewModel("MovementViewModel");
-                Movement.Init(ref pca9685, startupTestingMethod);
-                /*
-                                try
-                                {
-                                    ShowDebugMessage("Initialize Onboard Buttons");
-                                    Buttons = new OnboardButonControlsViewModel("ButtonsViewModel");
-                                    Buttons.Init();
-                                    onboardLed.SetColor(Color.Green);
-                                }
-                                catch (Exception instantiateButtonEx)
-                                {
-                                    ShowDebugMessage("Initialize Buttons error: " + instantiateButtonEx.Message, true);
-                                    onboardLed.SetColor(Color.Coral);
-                                }
-                */
 
-                try
+                Task commsStartupTask = new Task(async () =>
                 {
-                    ShowDebugMessage(this, "Init Comms");
-                    Display.ShowMessage(new List<string>() { "Comms Startup in progress" });
-                    comms = new CommunicationsViewModel("comms");
-                    comms.Init();
-                }
-                catch (Exception ex)
-                {
-                    ShowDebugMessage(this,
-                        ex.ToString(),
-                        ErrorLoggingThreshold.exception);
-                    onboardLed.SetColor(Color.Red);
-                    return false;
-                }
+                    MasterStatus.ShowDebugMessage(this, "Init Comms");
 
-                try
-                {
-                    ShowDebugMessage(this, "Init Sensors");
-                    Display.ShowMessage(new List<string>() { "Sensor Startup in progress" });
-                    _sensors = new SensorsViewModel("Sensors Controller");
-                    _sensors.Init(ref i2CBus);
-                }
-                catch (Exception ex)
-                {
-                    ShowDebugMessage(this,
-                        ex.ToString(),
-                        ErrorLoggingThreshold.exception);
-                    onboardLed.SetColor(Color.Red);
-                    return false;
-                }
+                    await comms.Init();
+                });
+                startupTasks.Add(commsStartupTask);
 
-                try
+                Task lightsStartupTask = new Task(() =>
                 {
-                    ShowDebugMessage(this, "Init Lights");
-                    Display.ShowMessage(new List<string>() { "Lights Startup in progress" });
-                    _lights = new LightsViewModel("Lights Controller");
                     _lights.Init();
-                }
-                catch (Exception ex)
+                });
+                startupTasks.Add(lightsStartupTask);
+
+
+                Task sensorsStartupTask = new Task(() =>
                 {
-                    ShowDebugMessage(this,
-                        ex.ToString(),
-                        ErrorLoggingThreshold.exception);
-                    onboardLed.SetColor(Color.Red);
-                    return false;
+                    MasterStatus.ShowDebugMessage(this, "Init Sensors");
+
+                    _sensors.Init(ref i2CBus);
+                });
+                startupTasks.Add(sensorsStartupTask);
+
+
+                foreach (var element in startupTasks)
+                {
+                    element.Start();
                 }
+
+                Task.WaitAll(startupTasks.ToArray());
+
+
+                Task movementStartupTask = new Task(() =>
+                {
+                    MasterStatus.ShowDebugMessage(this, "Initialize Master Movement Controller");
+                    Movement.Init(ref pca9685, startupTestingMethod);
+                });
+
+                movementStartupTask.Start();
+                MasterStatus.CoreComponentsStatus = ComponentStatus.Ready;
+                MasterStatus.RefreshGlobalStatus("MainViewModel init complete");
 
                 return true;
             }
             catch (Exception ex)
             {
-                ShowDebugMessage(
+                MasterStatus.ShowDebugMessage(
                     this,
                     "Initialize error: " + ex.Message,
                     ErrorLoggingThreshold.exception);
-                onboardLed.SetColor(Color.Red);
+
+                MasterStatus.RefreshGlobalStatus("MainViewModel init error");
                 return false;
             }
-
         }
 
-        public void ShowDebugMessage(ValleyBaseViewModel sender, string messageToShow, ErrorLoggingThreshold messageCategory = ErrorLoggingThreshold.debug)
+        public StatusViewModel MasterStatus
         {
-            if (messageCategory <= debugThreshhold)
-            {
-                debugQueue.Add(sender.Name + " - " + messageToShow + " - " + DateTimeOffset.Now.TimeOfDay);
-            }
-        }
-
-        public void ScanDebugQueueForNewMessages(object state)
-        {
-            if (debugQueueScanActive)
-            {
-                return;
-            }
-
-            debugQueueScanActive = true;
-
-            try
-            {
-
-                int lastIndex = debugQueue.Count - 1;
-                while (lastIndex >= 0)
-                {
-                    Console.WriteLine(debugQueue[lastIndex]);
-                    debugQueue.RemoveAt(lastIndex);
-                    lastIndex--;
-                }
-            }
-            catch (Exception)
-            {
-
-            }
-            finally
-            {
-                debugQueueScanActive = false;
-            }
+            get => _masterStatus;
         }
     }
 }

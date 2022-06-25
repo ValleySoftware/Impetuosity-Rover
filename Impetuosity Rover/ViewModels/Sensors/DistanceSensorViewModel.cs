@@ -9,7 +9,7 @@ namespace Impetuosity_Rover.ViewModels
     public class DistanceSensorViewModel : SensorBaseViewModel
     {
         private Vl53l0x _distanceSensor;
-        public double LatestReadingInCM = -1;
+        private double _latestReadingInCM = -1;
 
         public DistanceSensorViewModel(string name) : base(name)
         {
@@ -24,11 +24,17 @@ namespace Impetuosity_Rover.ViewModels
             _distanceSensor.DistanceUpdated += _distanceSensor_DistanceUpdated;
             _distanceSensor.StartUpdating(TimeSpan.FromSeconds(1));
 
+            IsReady = true;
         }
 
         private void _distanceSensor_DistanceUpdated(object sender, Meadow.IChangeResult<Meadow.Units.Length> e)
         {
-            LatestReadingInCM = e.New.Centimeters;
+            _latestReadingInCM = e.New.Centimeters;
+        }
+
+        public double LatestReadingInCM
+        {
+            get => _latestReadingInCM;
         }
     }
 }

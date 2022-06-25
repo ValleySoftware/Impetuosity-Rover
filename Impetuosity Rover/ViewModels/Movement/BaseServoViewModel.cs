@@ -54,14 +54,15 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 _defaultAngle = defaultAngle;
                 _position = defaultAngle;
 
-                RotateToPosition();
+                IsReady = true;
 
+                RotateToPosition();
 
                 return true;
             }
             catch (Exception ex)
             {
-                mainViewModel.ShowDebugMessage(this, "Error: " + ex.Message, ErrorLoggingThreshold.exception);
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Error: " + ex.Message, ErrorLoggingThreshold.exception);
                 return false;
             }
         }
@@ -119,6 +120,11 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
         private void RotateToPosition()
         {
+            if (!IsReady)
+            {
+                return;
+            }
+
             double adjustedAngle = 0;
             try
             {
@@ -128,7 +134,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
                 if (!_position.Equals(adjustedAngle))
                 {
-                    mainViewModel.ShowDebugMessage(this,
+                    mainViewModel.MasterStatus.ShowDebugMessage(this,
                         _name + " angle modified by " + AlignmentModifier + " from " + Position + " to " + adjustedAngle,
                         ErrorLoggingThreshold.debug);
                 }
@@ -140,7 +146,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
             }
             catch (Exception ex)
             {
-                mainViewModel.ShowDebugMessage(this, "Error: " + ex.Message + " - angle requested (adjusted) was : " + adjustedAngle.ToString(), ErrorLoggingThreshold.exception);
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Error: " + ex.Message + " - angle requested (adjusted) was : " + adjustedAngle.ToString(), ErrorLoggingThreshold.exception);
             }
         }
 
@@ -158,11 +164,21 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
         public void CentreBogie()
         {
+            if (!IsReady)
+            {
+                return;
+            }
+
             Position = _centreAngle;
         }
 
         public void MoveToDefaultAngle()
         {
+            if (!IsReady)
+            {
+                return;
+            }
+
             Position = DefaultAngle;
         }
 

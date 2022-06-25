@@ -34,11 +34,13 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
                 _hBridge.IsNeutral = true;
 
+                IsReady = true;
+
                 return true;
             }
             catch (Exception ex)
             {
-                mainViewModel.ShowDebugMessage(this, "Error: " + ex.Message, ErrorLoggingThreshold.exception);
+                mainViewModel.MasterStatus.ShowDebugMessage(this, "Error: " + ex.Message, ErrorLoggingThreshold.exception);
                 return false;
             }
 
@@ -46,6 +48,11 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
         public void SetMotorPower(float power)
         {
+            if (!IsReady)
+            {
+                return;
+            }
+
             _stopRequested = false;
             _hBridge.Power = power;
         }
@@ -80,6 +87,11 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
         public void Stop()
         {
+            if (!IsReady)
+            {
+                return;
+            }
+
             _stopRequested = true;
 
             _hBridge.IsNeutral = true;
