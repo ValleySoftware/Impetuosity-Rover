@@ -6,10 +6,13 @@
     <AssemblyName>App</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="System.Diagnostics.Tracer.dll" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Meadow" Version="0.31.1" />
     <PackageReference Include="Meadow.F7" Version="0.31.1" />
     <PackageReference Include="Meadow.Foundation" Version="0.33.1" />
-    <PackageReference Include="Meadow.Foundation.Displays.Ssd130x" Version="0.12.53" />
+    <PackageReference Include="Meadow.Foundation.Displays.Ssd130x" Version="0.12.47" />
     <PackageReference Include="Meadow.Foundation.ICs.IOExpanders.Pca9685" Version="0.1.49" />
     <PackageReference Include="Meadow.Foundation.Sensors.Atmospheric.Ccs811" Version="0.1.17" />
     <PackageReference Include="Meadow.Foundation.Sensors.Distance.Vl53l0x" Version="0.1.45" />

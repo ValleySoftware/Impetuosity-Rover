@@ -39,13 +39,16 @@ namespace Impetuosity_Rover.ViewModels.Primary
 
         public MainViewModel(string name) : base(name)
         {
+            Console.WriteLine("mainViewModel constructor started");
+
             _masterStatus = new StatusViewModel("Master Status View Model");
             _masterStatus.Init();
-            MasterStatus.CoreComponentsStatus = ComponentStatus.Uninitialised;
         }
 
-        public bool Init()
+        public void Init()
         {
+            Console.WriteLine("mainViewModel Init started");
+
             List<Task> startupTasks = new List<Task>();
 
             MasterStatus.CoreComponentsStatus = ComponentStatus.Initialising;
@@ -65,28 +68,27 @@ namespace Impetuosity_Rover.ViewModels.Primary
                 MasterStatus.ShowDebugMessage(this, "Initialize I2C");
                 i2CBus = _device.CreateI2cBus(I2cBusSpeed.Standard);
 
-                Display.Init(i2CBus);
+                Display.Init(ref i2CBus);
 
                 MasterStatus.ShowDebugMessage(this, "Create PCA9685");
                 pca9685 = new Pca9685(i2CBus, 0x40, i2cFrequency);
                 MasterStatus.ShowDebugMessage(this, "Initialize PCA9685");
                 pca9685.Initialize();
-
-
+                
                 Task commsStartupTask = new Task(async () =>
                 {
                     MasterStatus.ShowDebugMessage(this, "Init Comms");
 
                     await comms.Init();
                 });
-                startupTasks.Add(commsStartupTask);
 
+                startupTasks.Add(commsStartupTask);
+                
                 Task lightsStartupTask = new Task(() =>
                 {
                     _lights.Init();
                 });
                 startupTasks.Add(lightsStartupTask);
-
 
                 Task sensorsStartupTask = new Task(() =>
                 {
@@ -95,6 +97,7 @@ namespace Impetuosity_Rover.ViewModels.Primary
                     _sensors.Init(ref i2CBus);
                 });
                 startupTasks.Add(sensorsStartupTask);
+                
 
 
                 foreach (var element in startupTasks)
@@ -115,7 +118,6 @@ namespace Impetuosity_Rover.ViewModels.Primary
                 MasterStatus.CoreComponentsStatus = ComponentStatus.Ready;
                 MasterStatus.RefreshGlobalStatus("MainViewModel init complete");
 
-                return true;
             }
             catch (Exception ex)
             {
@@ -125,7 +127,6 @@ namespace Impetuosity_Rover.ViewModels.Primary
                     ErrorLoggingThreshold.exception);
 
                 MasterStatus.RefreshGlobalStatus("MainViewModel init error");
-                return false;
             }
         }
 

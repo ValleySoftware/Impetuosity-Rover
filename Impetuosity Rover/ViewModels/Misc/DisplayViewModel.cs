@@ -20,19 +20,27 @@ namespace Impetuosity_Rover.ViewModels.Misc
             mainViewModel.MasterStatus.DisplayStatus = ComponentStatus.Uninitialised;
         }
 
-        public void Init(II2cBus i2CBus)
+        public void Init(ref II2cBus i2CBus)
         {
-            mainViewModel.MasterStatus.DisplayStatus = ComponentStatus.Initialising;
-            display = new Ssd1306(i2CBus,
-                address: 60,
-                displayType: Ssd130xBase.DisplayType.OLED128x32);
+            try
+            {
+                mainViewModel.MasterStatus.DisplayStatus = ComponentStatus.Initialising;
+                display = new Ssd1306(i2CBus,
+                    address: 60,
+                    displayType: Ssd130xBase.DisplayType.OLED128x64);
 
-            graphics = new MicroGraphics(display);
-            graphics.Clear();
-            graphics.Show();
+                graphics = new MicroGraphics(display);
+                graphics.Clear();
+                graphics.Show();
 
-            IsReady = true;
-            mainViewModel.MasterStatus.DisplayStatus = ComponentStatus.Ready;
+                IsReady = true;
+                mainViewModel.MasterStatus.DisplayStatus = ComponentStatus.Ready;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("display Init error: " + e.Message);
+
+            }
         }
 
         public void ShowMessage(List<string> lines)

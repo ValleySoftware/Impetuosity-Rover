@@ -24,7 +24,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
             _pca = pca;
             _pan = new BaseServoViewModel("Pan");
             _tilt = new BaseServoViewModel("Tilt");
-            _pan.Init(ref pca, 4, ref Meadow.Foundation.Servos.NamedServoConfigs.SG90, 0, false, 10, 170, 90, 145); //Larger = left
+            _pan.Init(ref pca, 4, ref Meadow.Foundation.Servos.NamedServoConfigs.SG90, 0, false, 10, 170, 90, 170); //Larger = left
             _tilt.Init(ref pca, 5, ref Meadow.Foundation.Servos.NamedServoConfigs.SG90, 0, false, 10, 170, 90, 45); // Smaller number = down
 
             //_pan.CentreBogie();

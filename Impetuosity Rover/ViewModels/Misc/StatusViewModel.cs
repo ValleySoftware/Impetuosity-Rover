@@ -55,29 +55,41 @@ namespace Impetuosity_Rover.ViewModels.Misc
 
         public void Init()
         {
-            ShowDebugMessage(this, "Initialize LED for debugging.");
-
-            if (onboardLed == null)
+            try
             {
-                onboardLed = new RgbPwmLed(
-                    device: _device,
-                    redPwmPin: _device.Pins.OnboardLedRed,
-                    greenPwmPin: _device.Pins.OnboardLedGreen,
-                    bluePwmPin: _device.Pins.OnboardLedBlue,
-                    new Voltage(3.3f, Voltage.UnitType.Volts),
-                    new Voltage(3.3f, Voltage.UnitType.Volts),
-                    new Voltage(3.3f, Voltage.UnitType.Volts),
-                    Meadow.Peripherals.Leds.IRgbLed.CommonType.CommonAnode);
+                ShowDebugMessage(this, "Initialize LED for debugging.");
+
+                if (onboardLed == null)
+                {
+                    onboardLed = new RgbPwmLed(
+                        device: _device,
+                        redPwmPin: _device.Pins.OnboardLedRed,
+                        greenPwmPin: _device.Pins.OnboardLedGreen,
+                        bluePwmPin: _device.Pins.OnboardLedBlue,
+                        new Voltage(3.3f, Voltage.UnitType.Volts),
+                        new Voltage(3.3f, Voltage.UnitType.Volts),
+                        new Voltage(3.3f, Voltage.UnitType.Volts),
+                        Meadow.Peripherals.Leds.IRgbLed.CommonType.CommonAnode);
+                }
+
+                ShowDebugMessage(this, "LED ready.");
+                
+                AutoResetEvent autoResetEvent = new AutoResetEvent(true);
+                debugLogTimer = new Timer(
+                    new TimerCallback(ScanDebugQueueForNewMessages),
+                    autoResetEvent,
+                    TimeSpan.FromSeconds(10),
+                    TimeSpan.FromSeconds(1));
+
+                ShowDebugMessage(this, "debug log timer ready.");
+
+                onboardLed.SetColor(Color.Blue);
             }
-
-            AutoResetEvent autoResetEvent = new AutoResetEvent(true);
-            debugLogTimer = new Timer(
-                new TimerCallback(ScanDebugQueueForNewMessages),
-                autoResetEvent,
-                TimeSpan.FromSeconds(0),
-                TimeSpan.FromSeconds(1));
-
-            onboardLed.SetColor(Color.Blue);
+            catch (Exception e)
+            {
+                onboardLed.SetColor(Color.Red);
+                Console.WriteLine("Status Init error: " + e.Message);
+            }
         }
 
         public void RefreshGlobalStatus(string senderMessage)
@@ -135,6 +147,8 @@ namespace Impetuosity_Rover.ViewModels.Misc
         {
             if (messageCategory <= debugThreshhold)
             {
+                Console.WriteLine("SDM: " + messageToShow);
+
                 debugQueue.Add(new DebugLogObject(messageToShow, sender.Name, DateTimeOffset.Now));
             }
         }
@@ -166,16 +180,20 @@ namespace Impetuosity_Rover.ViewModels.Misc
                         lastObjectInList = element;
                     }
 
-                    mainViewModel.Display.ShowMessage(new List<string>() { lastObjectInList.Message });
+                    if (mainViewModel.Display != null &&
+                        mainViewModel.Display.IsReady)
+                    {
+                        mainViewModel.Display.ShowMessage(
+                            new List<string>() { lastObjectInList.Message });
+                    }
                 }
             }
             catch (Exception e)
             {
-
+                Console.WriteLine("statusViewModelScanError: " + e.Message);
             }
             finally
-            {
-                
+            {                
                 debugQueueScanActive = false;
             }
         }

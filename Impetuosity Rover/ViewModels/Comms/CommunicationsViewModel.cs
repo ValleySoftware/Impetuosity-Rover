@@ -149,8 +149,6 @@ namespace Impetuosity_Rover.ViewModels.Comms
 
         }
 
-
-
         public class WebSteeringRequestHandler : RequestHandlerBase
         {
             public WebSteeringRequestHandler()
@@ -224,11 +222,12 @@ namespace Impetuosity_Rover.ViewModels.Comms
             }
         }
 
-        //=======================
-        //Shared code
-        //=======================
 
-        public static string ReadBodyFromStream(HttpListenerRequest request)
+            //=======================
+            //Shared code
+            //=======================
+
+            public static string ReadBodyFromStream(HttpListenerRequest request)
         {
             MemoryStream memstream = new MemoryStream();
             request.InputStream.CopyTo(memstream);

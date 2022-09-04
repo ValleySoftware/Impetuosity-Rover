@@ -83,13 +83,23 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
             _pca = pca;
 
+            
+            ServoConfig S50 = new ServoConfig(
+            new Meadow.Units.Angle(0), 
+            new Meadow.Units.Angle(180), 
+            //750,
+            1000,
+            //2500,
+            2000, 
+            60);
+
             ServoConfig SG51Conf = new ServoConfig
             (
                 minimumAngle: new Meadow.Units.Angle(0, Meadow.Units.Angle.UnitType.Degrees),
                 maximumAngle: new Meadow.Units.Angle(180, Meadow.Units.Angle.UnitType.Degrees),
                 minimumPulseDuration: 1000,
                 //maximumPulseDuration : 2750,
-                maximumPulseDuration: 2000,
+                maximumPulseDuration: 2500,
                 frequency: 60
             ); //Some experimenting done here to get rotation kinda close...
 
@@ -106,10 +116,10 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 _bogies.Add(rightRearBogie);
 
                 mainViewModel.MasterStatus.ShowDebugMessage(this, "Init Bogies", ErrorLoggingThreshold.important);
-                leftFrontBogie.Init(ref _pca, 1, ref SG51Conf, -15);
-                leftRearBogie.Init(ref _pca, 0, ref SG51Conf, -15, true);
-                rightFrontBogie.Init(ref _pca, 15, ref SG51Conf, -20);
-                rightRearBogie.Init(ref _pca, 14, ref SG51Conf, 0, true);
+                leftFrontBogie.Init(ref _pca, 1, ref SG51Conf, -30);
+                leftRearBogie.Init(ref _pca, 0, ref SG51Conf, -25, true);
+                rightFrontBogie.Init(ref _pca, 15, ref SG51Conf, -35);
+                rightRearBogie.Init(ref _pca, 14, ref SG51Conf, -20, true);
             }
             catch (Exception exb)
             {

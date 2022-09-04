@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using static Impetuosity_Rover.Enumerations.Enumerations;
 
 namespace Impetuosity_Rover.ViewModels.Movement
@@ -118,7 +119,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
             }
         }
 
-        private void RotateToPosition()
+        private void RotateToPosition(bool fastMove = true)
         {
             if (!IsReady)
             {
@@ -141,7 +142,49 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
                 if (_servo != null)
                 {
-                    _servo.RotateTo(new Meadow.Units.Angle(adjustedAngle, Meadow.Units.Angle.UnitType.Degrees));
+                    if (fastMove)
+                    {
+                        _servo.RotateTo(new Meadow.Units.Angle(adjustedAngle, Meadow.Units.Angle.UnitType.Degrees));
+                    }
+                    else
+                    {
+                        mainViewModel.MasterStatus.ShowDebugMessage(this,
+                            _name + " attempting slow rotation to " + Position,
+                            ErrorLoggingThreshold.important);
+
+                        double incrementalAngle = Position;
+                        double step = 0;
+
+                        if (incrementalAngle < adjustedAngle)
+                        {
+                            step = 0.05f;
+                        }
+                        if (incrementalAngle > adjustedAngle)
+                        {
+                            step = -0.05f;
+                        }
+
+                        while (!incrementalAngle.Equals(adjustedAngle))
+                        {
+                            if (Math.Round(incrementalAngle, 1).Equals(Math.Round(adjustedAngle, 1)))
+                            {
+                                //To allow for rounding differences and minor final adjustments
+                                incrementalAngle = adjustedAngle;
+                            }
+                            else
+                            {
+                                incrementalAngle = incrementalAngle + step;
+                            }
+
+                            Console.WriteLine(_name + " Slow Rotation step " + incrementalAngle);
+                            _servo.RotateTo(new Meadow.Units.Angle(incrementalAngle, Meadow.Units.Angle.UnitType.Degrees));
+
+                            Task.Delay(TimeSpan.FromMilliseconds(500));
+                        }
+
+                        _servo.RotateTo(new Meadow.Units.Angle(Position, Meadow.Units.Angle.UnitType.Degrees));
+
+                    }
                 }
             }
             catch (Exception ex)
@@ -182,12 +225,6 @@ namespace Impetuosity_Rover.ViewModels.Movement
             Position = DefaultAngle;
         }
 
-        public static ServoConfig S50 = new ServoConfig(
-            new Meadow.Units.Angle(0), 
-            new Meadow.Units.Angle(180), 
-            750, 
-            2500, 
-            60);
 
     }
 
