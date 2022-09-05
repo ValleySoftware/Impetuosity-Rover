@@ -116,8 +116,8 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 _bogies.Add(rightRearBogie);
 
                 mainViewModel.MasterStatus.ShowDebugMessage(this, "Init Bogies", ErrorLoggingThreshold.important);
-                leftFrontBogie.Init(ref _pca, 1, ref SG51Conf, -30);
-                leftRearBogie.Init(ref _pca, 0, ref SG51Conf, -25, true);
+                leftFrontBogie.Init(ref _pca, 1, ref SG51Conf, -35);
+                leftRearBogie.Init(ref _pca, 0, ref SG51Conf, -35, true);
                 rightFrontBogie.Init(ref _pca, 15, ref SG51Conf, -35);
                 rightRearBogie.Init(ref _pca, 14, ref SG51Conf, -20, true);
             }
@@ -368,6 +368,14 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
 
             return result;
+        }
+
+        public PanTiltViewModel PanTilt
+        {
+            get
+            {
+                return _panTilt;
+            }
         }
 
         //==============================

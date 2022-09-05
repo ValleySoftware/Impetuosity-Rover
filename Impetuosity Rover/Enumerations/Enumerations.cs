@@ -60,6 +60,12 @@ namespace Impetuosity_Rover.Enumerations
             CatastrophicError
         }
 
+        public enum PanOrTilt
+        {
+            Pan,
+            Tilt
+        }
+
         public enum ComponentStatusColours
         {
             Green,

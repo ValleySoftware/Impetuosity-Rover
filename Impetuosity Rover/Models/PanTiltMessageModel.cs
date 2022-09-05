@@ -8,5 +8,7 @@ namespace Impetuosity_Rover.Models
     public class PanTiltMessageModel : MessageBaseModel
     {
         public SteeringRequestType RequestType { get; set; }
-        public double SteeringValue { get; set; }
+        public double RequestValue { get; set; }
+        public PanOrTilt PanTiltSelect { get; set; }
     }
+}

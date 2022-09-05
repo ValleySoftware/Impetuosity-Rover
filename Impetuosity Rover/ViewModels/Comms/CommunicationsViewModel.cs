@@ -223,212 +223,284 @@ namespace Impetuosity_Rover.ViewModels.Comms
         }
 
 
+        public class WebPanTiltRequestHandler : RequestHandlerBase
+        {
+            public WebPanTiltRequestHandler()
+            {
+                Console.WriteLine("WebPanTiltRequestHandler constructor called.");
+            }
+
+            [HttpPost("/pantiltcontrol")]
+            public IActionResult MotorControl()
+            {
+                Console.WriteLine("MapleWebPanTiltRequestHandlerEndpointActivated.");
+                IActionResult result = null;
+
+                string bodyText;
+
+                if (Context.Request.HasEntityBody)
+                {
+                    bodyText = ReadBodyFromStream(Context.Request);
+                    Console.WriteLine($"Body is {bodyText} ");
+
+                    try
+                    {
+                        var model = new PanTiltMessageModel();
+                        SSJSONStringToObject(bodyText, model);
+
+                        if (model != null)
+                        {
+                            MeadowApp.Current.mainViewModel.messages.Add(model);
+                            model.RequestReceivedStamp = DateTimeOffset.Now;
+                            model.RequestStatus = MessageStatus.receivedPendingAction;
+
+                            result = RequestPanTilt(ref model);
+                        }
+                    }
+                    catch (Exception deserializeEx)
+                    {
+                        Console.WriteLine("steering request deserialization error " + deserializeEx.Message, true);
+                        result = new StatusCodeResult(valleyMapleError_ParseError);
+                    }
+                }
+                else
+                {
+                    return new StatusCodeResult(valleyMapleError_UnknownError);
+                }
+
+
+                return result;
+            }
+
+            private IActionResult RequestPanTilt(ref PanTiltMessageModel request)
+            {
+                try
+                {
+                    if (MeadowApp.Current.mainViewModel.Movement.PanTilt.ProcessPanTiltRequest(ref request))
+                    {
+                        return new OkResult();
+                    }
+                    else
+                    {
+                        return new StatusCodeResult(valleyMapleError_ActionError);
+                    }
+
+                }
+                catch (Exception parseException)
+                {
+                    Console.WriteLine("pantilt request error " + parseException.Message, true);
+                    return new StatusCodeResult(valleyMapleError_ParseError);
+                }
+
+            }
+        }
+
             //=======================
             //Shared code
             //=======================
 
             public static string ReadBodyFromStream(HttpListenerRequest request)
-        {
-            MemoryStream memstream = new MemoryStream();
-            request.InputStream.CopyTo(memstream);
-            memstream.Position = 0;
-            string text;
-            using (StreamReader reader = new StreamReader(memstream))
             {
-                text = reader.ReadToEnd();
-            }
-            return text;
-        }
-
-        public static MessageBaseModel SSJSONStringToObject(string json, MessageBaseModel destinationObject)
-        {
-            var l = JSONStringToKeyValuePairs(json);
-
-            if (l != null)
-            {
-                return KeyValuePairListToObject(l, destinationObject);
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        private static List<KeyValuePair<string, string>> JSONStringToKeyValuePairs(string json)
-        {
-            List<KeyValuePair<string, string>> result = new List<KeyValuePair<string, string>>();
-
-            try
-            {
-                json = json.Substring(2, json.Length - 3);
-                string splitConditionOne = "\":";
-                string splitConditionTwo = ",\"";
-
-                char quotationMark = '"';
-
-                var splitConditions = new string[2] { splitConditionOne, splitConditionTwo };
-                var parts = json.Split(splitConditions, StringSplitOptions.RemoveEmptyEntries);
-
-                int i = 0;
-
-                while (i < parts.Length)
+                MemoryStream memstream = new MemoryStream();
+                request.InputStream.CopyTo(memstream);
+                memstream.Position = 0;
+                string text;
+                using (StreamReader reader = new StreamReader(memstream))
                 {
-                    //int mod = i % 2;
+                    text = reader.ReadToEnd();
+                }
+                return text;
+            }
 
-                    //if (mod != 0 &&
+            public static MessageBaseModel SSJSONStringToObject(string json, MessageBaseModel destinationObject)
+            {
+                var l = JSONStringToKeyValuePairs(json);
 
-                    if (!string.IsNullOrEmpty(parts[i]) &&
-                        parts[i][0].Equals(quotationMark))
+                if (l != null)
+                {
+                    return KeyValuePairListToObject(l, destinationObject);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            private static List<KeyValuePair<string, string>> JSONStringToKeyValuePairs(string json)
+            {
+                List<KeyValuePair<string, string>> result = new List<KeyValuePair<string, string>>();
+
+                try
+                {
+                    json = json.Substring(2, json.Length - 3);
+                    string splitConditionOne = "\":";
+                    string splitConditionTwo = ",\"";
+
+                    char quotationMark = '"';
+
+                    var splitConditions = new string[2] { splitConditionOne, splitConditionTwo };
+                    var parts = json.Split(splitConditions, StringSplitOptions.RemoveEmptyEntries);
+
+                    int i = 0;
+
+                    while (i < parts.Length)
                     {
-                        parts[i] = parts[i].Substring(1, parts[i].Length - 2);
+                        //int mod = i % 2;
+
+                        //if (mod != 0 &&
+
+                        if (!string.IsNullOrEmpty(parts[i]) &&
+                            parts[i][0].Equals(quotationMark))
+                        {
+                            parts[i] = parts[i].Substring(1, parts[i].Length - 2);
+                        }
+
+                        var ind = parts[i].IndexOf(quotationMark);
+                        if (ind > 0)
+                        {
+                            parts[i] = parts[i].Substring(0, ind);
+                        }
+
+                        parts[i] = parts[i].Trim();
+
+                        i++;
                     }
 
-                    var ind = parts[i].IndexOf(quotationMark);
-                    if (ind > 0)
+
+                    int buildListLoop = 0;
+
+                    while (buildListLoop < parts.Length)
                     {
-                        parts[i] = parts[i].Substring(0, ind);
+                        try
+                        {
+                            var element =
+                                new KeyValuePair<string, string>(
+                                    parts[buildListLoop],
+                                    parts[buildListLoop + 1]);
+                            result.Add(element);
+                        }
+                        catch (Exception e)
+                        {
+
+                        }
+
+                        buildListLoop = buildListLoop + 2;
                     }
 
-                    parts[i] = parts[i].Trim();
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+            }
 
-                    i++;
+            private static MessageBaseModel KeyValuePairListToObject(
+                List<KeyValuePair<string, string>> kvpList,
+                object destinationObject)
+            {
+                if (destinationObject == null)
+                {
+                    return null;
                 }
 
+                Type objType = destinationObject.GetType();
 
-                int buildListLoop = 0;
-
-                while (buildListLoop < parts.Length)
+                foreach (var keyValuePair in kvpList)
                 {
                     try
                     {
-                        var element =
-                            new KeyValuePair<string, string>(
-                                parts[buildListLoop],
-                                parts[buildListLoop + 1]);
-                        result.Add(element);
+                        var typePropertyMatchingKey = objType.GetProperty(keyValuePair.Key);
+
+                        if (typePropertyMatchingKey != null &&
+                            keyValuePair.Value != null)
+                        {
+
+                            if (typePropertyMatchingKey.PropertyType == typeof(int))
+                            {
+                                typePropertyMatchingKey.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
+                            }
+
+                            if (typePropertyMatchingKey.PropertyType == typeof(string))
+                            {
+                                typePropertyMatchingKey.SetValue(destinationObject, keyValuePair.Value, null);
+                            }
+
+                            if (typePropertyMatchingKey.PropertyType == typeof(DateTime))
+                            {
+                                typePropertyMatchingKey.SetValue(destinationObject, Convert.ToDateTime(keyValuePair.Value), null);
+                            }
+
+                            if (typePropertyMatchingKey.PropertyType == typeof(TimeSpan))
+                            {
+                                //string str = keyValuePair.Value.ToString();
+                                // int h = Convert.ToInt32(str.Substring(0, 2));
+                                //int m = Convert.ToInt32(str.Substring(3, 2));
+                                //int s = Convert.ToInt32(str.Substring(6, 2));
+                                //int ms = Convert.ToInt32(str.Substring(9, 4));
+
+                                //TimeSpan t = new TimeSpan(
+                                //        0,h,m,s,ms);
+
+                                //typePropertyMatchingKey.SetValue(
+                                //    destinationObject,
+                                //    t, null);
+                                var t = TimeSpan.Parse(keyValuePair.Value);
+                                typePropertyMatchingKey.SetValue(
+                                    destinationObject,
+                                    t, null);
+                            }
+
+                            if (typePropertyMatchingKey.PropertyType == typeof(DateTimeOffset))
+                            {
+                                var d = new DateTimeOffset(
+                                    Convert.ToInt32(keyValuePair.Value.Substring(0, 4)),
+                                    Convert.ToInt32(keyValuePair.Value.Substring(4, 2)),
+                                    Convert.ToInt32(keyValuePair.Value.Substring(6, 2)),
+                                    Convert.ToInt32(keyValuePair.Value.Substring(8, 2)),
+                                    Convert.ToInt32(keyValuePair.Value.Substring(8, 2)),
+                                    Convert.ToInt32(keyValuePair.Value.Substring(8, 2)), TimeSpan.Zero);
+                                typePropertyMatchingKey.SetValue(destinationObject, d, null);
+                            }
+
+                            if (typePropertyMatchingKey.PropertyType == typeof(bool))
+                            {
+                                typePropertyMatchingKey.SetValue(destinationObject, Convert.ToBoolean(keyValuePair.Value.ToString()), null);
+                            }
+
+                            if (typePropertyMatchingKey.PropertyType == typeof(float) ||
+                                typePropertyMatchingKey.PropertyType == typeof(double))
+                            {
+                                string s = keyValuePair.Value.ToString();
+                                double d = Convert.ToDouble(s);
+                                float f = (float)d;
+                                typePropertyMatchingKey.SetValue(destinationObject, f, null);
+
+                                //typePropertyMatchingKey.SetValue(destinationObject, Convert.ToDouble(keyValuePair.Value.ToString()), null);
+                            }
+
+                            if (typePropertyMatchingKey.PropertyType == typeof(SteeringRequestType))
+                            {
+                                typePropertyMatchingKey.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
+                            }
+
+                        }
                     }
                     catch (Exception e)
                     {
-
-                    }
-
-                    buildListLoop = buildListLoop + 2;
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
-        }
-
-        private static MessageBaseModel KeyValuePairListToObject(
-            List<KeyValuePair<string, string>> kvpList,
-            object destinationObject)
-        {
-            if (destinationObject == null)
-            {
-                return null;
-            }
-
-            Type objType = destinationObject.GetType();
-
-            foreach (var keyValuePair in kvpList)
-            {
-                try
-                {
-                    var typePropertyMatchingKey = objType.GetProperty(keyValuePair.Key);
-
-                    if (typePropertyMatchingKey != null &&
-                        keyValuePair.Value != null)
-                    {
-
-                        if (typePropertyMatchingKey.PropertyType == typeof(int))
-                        {
-                            typePropertyMatchingKey.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
-                        }
-
-                        if (typePropertyMatchingKey.PropertyType == typeof(string))
-                        {
-                            typePropertyMatchingKey.SetValue(destinationObject, keyValuePair.Value, null);
-                        }
-
-                        if (typePropertyMatchingKey.PropertyType == typeof(DateTime))
-                        {
-                            typePropertyMatchingKey.SetValue(destinationObject, Convert.ToDateTime(keyValuePair.Value), null);
-                        }
-
-                        if (typePropertyMatchingKey.PropertyType == typeof(TimeSpan))
-                        {
-                            //string str = keyValuePair.Value.ToString();
-                            // int h = Convert.ToInt32(str.Substring(0, 2));
-                            //int m = Convert.ToInt32(str.Substring(3, 2));
-                            //int s = Convert.ToInt32(str.Substring(6, 2));
-                            //int ms = Convert.ToInt32(str.Substring(9, 4));
-
-                            //TimeSpan t = new TimeSpan(
-                            //        0,h,m,s,ms);
-
-                            //typePropertyMatchingKey.SetValue(
-                            //    destinationObject,
-                            //    t, null);
-                            var t = TimeSpan.Parse(keyValuePair.Value);
-                            typePropertyMatchingKey.SetValue(
-                                destinationObject,
-                                t, null);
-                        }
-
-                        if (typePropertyMatchingKey.PropertyType == typeof(DateTimeOffset))
-                        {
-                            var d = new DateTimeOffset(
-                                Convert.ToInt32(keyValuePair.Value.Substring(0, 4)),
-                                Convert.ToInt32(keyValuePair.Value.Substring(4, 2)),
-                                Convert.ToInt32(keyValuePair.Value.Substring(6, 2)),
-                                Convert.ToInt32(keyValuePair.Value.Substring(8, 2)),
-                                Convert.ToInt32(keyValuePair.Value.Substring(8, 2)),
-                                Convert.ToInt32(keyValuePair.Value.Substring(8, 2)), TimeSpan.Zero);
-                            typePropertyMatchingKey.SetValue(destinationObject, d, null);
-                        }
-
-                        if (typePropertyMatchingKey.PropertyType == typeof(bool))
-                        {
-                            typePropertyMatchingKey.SetValue(destinationObject, Convert.ToBoolean(keyValuePair.Value.ToString()), null);
-                        }
-
-                        if (typePropertyMatchingKey.PropertyType == typeof(float) ||
-                            typePropertyMatchingKey.PropertyType == typeof(double))
-                        {
-                            string s = keyValuePair.Value.ToString();
-                            double d = Convert.ToDouble(s);
-                            float f = (float)d;
-                            typePropertyMatchingKey.SetValue(destinationObject, f, null);
-
-                            //typePropertyMatchingKey.SetValue(destinationObject, Convert.ToDouble(keyValuePair.Value.ToString()), null);
-                        }
-
-                        if (typePropertyMatchingKey.PropertyType == typeof(SteeringRequestType))
-                        {
-                            typePropertyMatchingKey.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
-                        }
-
+                        Console.WriteLine(
+                            "property value error on " +
+                            keyValuePair.Key +
+                            " - " +
+                            keyValuePair.Value +
+                            " : " +
+                            e.Message,
+                            true);
                     }
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine(
-                        "property value error on " +
-                        keyValuePair.Key +
-                        " - " +
-                        keyValuePair.Value +
-                        " : " +
-                        e.Message,
-                        true);
-                }
+
+                return (MessageBaseModel)destinationObject;
             }
-
-            return (MessageBaseModel)destinationObject;
-        }
-
+        
     }
 }
