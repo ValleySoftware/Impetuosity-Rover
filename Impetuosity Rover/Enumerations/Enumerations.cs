@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Impetuosity_Rover.Enumerations
+namespace Impetuous.Enumerations
 {
     public static class Enumerations
     {
@@ -60,7 +60,7 @@ namespace Impetuosity_Rover.Enumerations
             CatastrophicError
         }
 
-        public enum PanOrTilt
+        public enum PanTiltSelect
         {
             Pan,
             Tilt

@@ -1,4 +1,5 @@
-﻿using Impetuosity_Rover.Models;
+﻿
+using Impetuous.Models;
 using Impetuosity_Rover.ViewModels.Primary;
 using Meadow.Foundation.ICs.IOExpanders;
 using Meadow.Foundation.Web.Maple.Server;
@@ -7,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using static Impetuosity_Rover.Enumerations.Enumerations;
+using static Impetuous.Enumerations.Enumerations;
 
 namespace Impetuosity_Rover.ViewModels.Movement
 {
@@ -33,8 +34,8 @@ namespace Impetuosity_Rover.ViewModels.Movement
             //_pan.CentreBogie();
             //_tilt.CentreBogie();
             //Thread.Sleep(500);
-            _pan.MoveToDefaultAngle();
-            _tilt.MoveToDefaultAngle();
+            //_pan.MoveToDefaultAngle();
+            //_tilt.MoveToDefaultAngle();
 
             IsReady = true;
         }
@@ -69,10 +70,19 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
             try
             {
-                Console.WriteLine(request.PanTiltSelect.ToString(), true);
-                Console.WriteLine(Enumerations.Enumerations.PanOrTilt.Pan.ToString(), true);
+                Console.WriteLine($"msg Body (a) is {request.OriginalMessageString} ");
 
-                if (request.PanTiltSelect == Enumerations.Enumerations.PanOrTilt.Pan)
+                Console.WriteLine(request.RequestType.ToString());
+                Console.WriteLine(request.RequestValue.ToString());
+                Console.WriteLine(request.PanOrTilt.ToString());
+
+                mainViewModel.MasterStatus.ShowDebugMessage(this, 
+                    $"{request.RequestType} - " +
+                    $"{request.RequestValue} - " +
+                    $"{request.PanOrTilt}", 
+                    ErrorLoggingThreshold.important);
+
+                if (request.PanOrTilt == PanTiltSelect.Pan)
                 {
                     Console.WriteLine("pan", true);
                     PanTo(request.RequestValue);
@@ -84,6 +94,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
                     TiltTo(request.RequestValue);
                     return true;
                 }
+
             }
             catch (Exception parseException)
             {

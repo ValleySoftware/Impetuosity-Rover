@@ -1,7 +1,7 @@
 ﻿using Meadow.Foundation.Web.Maple.Server;
 using Meadow.Foundation.Web.Maple.Server.Routing;
 using System;
-using static Impetuosity_Rover.Enumerations.Enumerations;
+using static Impetuous.Enumerations.Enumerations;
 using Meadow.Gateway.WiFi;
 using System.Threading.Tasks;
 using Impetuosity_Rover.Models;
@@ -11,6 +11,7 @@ using System.IO;
 using System.Threading;
 using System.Collections.Generic;
 using Impetuosity_Rover.ViewModels.Primary;
+using Impetuous.Models;
 
 namespace Impetuosity_Rover.ViewModels.Comms
 {
@@ -104,6 +105,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
 
                     if (model != null)
                     {
+                        model.OriginalMessageString = bodyText;
                         MeadowApp.Current.mainViewModel.messages.Add(model);
                         model.RequestReceivedStamp = DateTimeOffset.Now;
                         model.RequestStatus = MessageStatus.receivedPendingAction;
@@ -176,6 +178,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
 
                         if (model != null)
                         {
+                            model.OriginalMessageString = bodyText;
                             MeadowApp.Current.mainViewModel.messages.Add(model);
                             model.RequestReceivedStamp = DateTimeOffset.Now;
                             model.RequestStatus = MessageStatus.receivedPendingAction;
@@ -250,6 +253,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
 
                         if (model != null)
                         {
+                            model.OriginalMessageString = bodyText;
                             MeadowApp.Current.mainViewModel.messages.Add(model);
                             model.RequestReceivedStamp = DateTimeOffset.Now;
                             model.RequestStatus = MessageStatus.receivedPendingAction;
@@ -312,7 +316,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                 return text;
             }
 
-            public static MessageBaseModel SSJSONStringToObject(string json, MessageBaseModel destinationObject)
+            public static MessageBaseModel SSJSONStringToObject(string json, object destinationObject)
             {
                 var l = JSONStringToKeyValuePairs(json);
 
@@ -395,112 +399,150 @@ namespace Impetuosity_Rover.ViewModels.Comms
                 }
             }
 
-            private static MessageBaseModel KeyValuePairListToObject(
-                List<KeyValuePair<string, string>> kvpList,
-                object destinationObject)
+        private static MessageBaseModel KeyValuePairListToObject(
+            List<KeyValuePair<string, string>> kvpList,
+            object destinationObject)
+        {
+            Type objType = destinationObject.GetType();
+
+            Console.WriteLine($"JSONStringToKeyValuePairs: object is identified as {objType}");
+            //var destinationObject = anonDestinationObject as anonDestinationObject.GetType();
+
+            if (destinationObject == null)
             {
-                if (destinationObject == null)
-                {
-                    return null;
-                }
+                Console.WriteLine($"JSONStringToKeyValuePairs error, destinationObject is null.  Exiting.");
+                return null;
+            }
 
-                Type objType = destinationObject.GetType();
 
-                foreach (var keyValuePair in kvpList)
+            foreach (var keyValuePair in kvpList)
+            {
+                try
                 {
-                    try
+                    Console.WriteLine(keyValuePair.Key);
+
+                    //Find the matching property in the destination object by Json object key (name)
+                    var destinationObjectProperty = objType.GetProperty(keyValuePair.Key);
+
+                    if (destinationObjectProperty == null)
                     {
-                        var typePropertyMatchingKey = objType.GetProperty(keyValuePair.Key);
+                        Console.WriteLine($"object property {keyValuePair.Key} is a UNMATCHED with value {keyValuePair.Value}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"object property {keyValuePair.Key} is a {destinationObjectProperty.PropertyType} with value {keyValuePair.Value}");
+                    }
 
-                        if (typePropertyMatchingKey != null &&
-                            keyValuePair.Value != null)
+                    if (destinationObjectProperty != null &&
+                        !string.IsNullOrEmpty(keyValuePair.Value))
+                    {
+                        bool identified = false;
+
+                        if (destinationObjectProperty.PropertyType == typeof(int))
                         {
+                            destinationObjectProperty.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
+                            identified = true;
+                        }
 
-                            if (typePropertyMatchingKey.PropertyType == typeof(int))
-                            {
-                                typePropertyMatchingKey.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
-                            }
+                        if (!identified &&
+                            destinationObjectProperty.PropertyType == typeof(string))
+                        {
+                            destinationObjectProperty.SetValue(destinationObject, keyValuePair.Value, null);
+                            identified = true;
+                        }
 
-                            if (typePropertyMatchingKey.PropertyType == typeof(string))
-                            {
-                                typePropertyMatchingKey.SetValue(destinationObject, keyValuePair.Value, null);
-                            }
+                        if (!identified &&
+                            destinationObjectProperty.PropertyType == typeof(DateTime))
+                        {
+                            destinationObjectProperty.SetValue(destinationObject, Convert.ToDateTime(keyValuePair.Value), null);
+                            identified = true;
+                        }
 
-                            if (typePropertyMatchingKey.PropertyType == typeof(DateTime))
-                            {
-                                typePropertyMatchingKey.SetValue(destinationObject, Convert.ToDateTime(keyValuePair.Value), null);
-                            }
+                        if (!identified &&
+                            destinationObjectProperty.PropertyType == typeof(TimeSpan))
+                        {
+                            var t = TimeSpan.Parse(keyValuePair.Value);
+                            destinationObjectProperty.SetValue(
+                                destinationObject,
+                                t, null);
+                            identified = true;
+                        }
 
-                            if (typePropertyMatchingKey.PropertyType == typeof(TimeSpan))
-                            {
-                                //string str = keyValuePair.Value.ToString();
-                                // int h = Convert.ToInt32(str.Substring(0, 2));
-                                //int m = Convert.ToInt32(str.Substring(3, 2));
-                                //int s = Convert.ToInt32(str.Substring(6, 2));
-                                //int ms = Convert.ToInt32(str.Substring(9, 4));
-
-                                //TimeSpan t = new TimeSpan(
-                                //        0,h,m,s,ms);
-
-                                //typePropertyMatchingKey.SetValue(
-                                //    destinationObject,
-                                //    t, null);
-                                var t = TimeSpan.Parse(keyValuePair.Value);
-                                typePropertyMatchingKey.SetValue(
-                                    destinationObject,
-                                    t, null);
-                            }
-
-                            if (typePropertyMatchingKey.PropertyType == typeof(DateTimeOffset))
-                            {
-                                var d = new DateTimeOffset(
+                        if (!identified &&
+                            destinationObjectProperty.PropertyType == typeof(DateTimeOffset))
+                        {
+                            var d = new DateTimeOffset(
                                     Convert.ToInt32(keyValuePair.Value.Substring(0, 4)),
                                     Convert.ToInt32(keyValuePair.Value.Substring(4, 2)),
                                     Convert.ToInt32(keyValuePair.Value.Substring(6, 2)),
                                     Convert.ToInt32(keyValuePair.Value.Substring(8, 2)),
                                     Convert.ToInt32(keyValuePair.Value.Substring(8, 2)),
                                     Convert.ToInt32(keyValuePair.Value.Substring(8, 2)), TimeSpan.Zero);
-                                typePropertyMatchingKey.SetValue(destinationObject, d, null);
-                            }
+                            destinationObjectProperty.SetValue(destinationObject, d, null);
+                            identified = true;
+                        }
 
-                            if (typePropertyMatchingKey.PropertyType == typeof(bool))
-                            {
-                                typePropertyMatchingKey.SetValue(destinationObject, Convert.ToBoolean(keyValuePair.Value.ToString()), null);
-                            }
+                        if (destinationObjectProperty.PropertyType == typeof(bool))
+                        {
+                            destinationObjectProperty.SetValue(destinationObject, Convert.ToBoolean(keyValuePair.Value.ToString()), null);
+                            identified = true;
+                        }
 
-                            if (typePropertyMatchingKey.PropertyType == typeof(float) ||
-                                typePropertyMatchingKey.PropertyType == typeof(double))
-                            {
-                                string s = keyValuePair.Value.ToString();
-                                double d = Convert.ToDouble(s);
-                                float f = (float)d;
-                                typePropertyMatchingKey.SetValue(destinationObject, f, null);
-
-                                //typePropertyMatchingKey.SetValue(destinationObject, Convert.ToDouble(keyValuePair.Value.ToString()), null);
-                            }
-
-                            if (typePropertyMatchingKey.PropertyType == typeof(SteeringRequestType))
-                            {
-                                typePropertyMatchingKey.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
-                            }
+                        if (!identified &&
+                            (destinationObjectProperty.PropertyType == typeof(float) ||
+                                destinationObjectProperty.PropertyType == typeof(double)))
+                        {
+                            string s = keyValuePair.Value.ToString();
+                            double d = Convert.ToDouble(s);
+                            float f = (float)d;
+                            destinationObjectProperty.SetValue(destinationObject, f, null);
+                            identified = true;
 
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(
-                            "property value error on " +
-                            keyValuePair.Key +
-                            " - " +
-                            keyValuePair.Value +
-                            " : " +
-                            e.Message,
-                            true);
+
+                        if (!identified &&
+                            destinationObjectProperty.PropertyType == typeof(SteeringRequestType))
+                        {
+                            destinationObjectProperty.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
+                            identified = true;
+                        }
+
+                        if (!identified &&
+                            destinationObjectProperty.PropertyType == typeof(PanTiltSelect))
+                        {
+                            destinationObjectProperty.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
+                            identified = true;
+                        }
+
+                        if (!identified &&
+                            destinationObjectProperty.PropertyType == typeof(MessageStatus))
+                        {
+                            destinationObjectProperty.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
+                            identified = true;
+                        }
+
+                        if (!identified)
+                        {
+                            Console.WriteLine($"JSON Object Convert {keyValuePair.Key} is UNIDENTIFIED with value {keyValuePair.Value}");
+                        }
+
                     }
                 }
-
-                return (MessageBaseModel)destinationObject;
+                catch (Exception e)
+                {
+                    Console.WriteLine(
+                        "property value error on " +
+                        keyValuePair.Key +
+                        " - " +
+                        keyValuePair.Value +
+                        " : " +
+                        e.Message,
+                        true);
+                }
             }
-        
+
+            return (MessageBaseModel)destinationObject;
+
+        }
     }
 }

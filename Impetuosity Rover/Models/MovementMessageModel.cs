@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using static Impetuosity_Rover.Enumerations.Enumerations;
+using static Impetuous.Enumerations.Enumerations;
 
 namespace Impetuosity_Rover.Models
 {

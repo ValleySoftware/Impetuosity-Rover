@@ -5,7 +5,7 @@ using Impetuosity_Rover.ViewModels.Primary;
 using Meadow.Foundation.Displays.Ssd130x;
 using Meadow.Foundation.Graphics;
 using Meadow.Hardware;
-using static Impetuosity_Rover.Enumerations.Enumerations;
+using static Impetuous.Enumerations.Enumerations;
 
 namespace Impetuosity_Rover.ViewModels.Misc
 {
