@@ -10,12 +10,12 @@ namespace Impetuosity_Rover.ViewModels.Primary
 {
     public class ValleyBaseViewModel
     {
-        public ErrorLoggingThreshold debugThreshhold = ErrorLoggingThreshold.important;
+        public ErrorLoggingThreshold debugThreshhold = ErrorLoggingThreshold.debug;
 
         private bool _isReady = false;
 
         protected MeadowApp _appRoot => MeadowApp.Current;
-        public F7FeatherV2 _device => MeadowApp.Device;
+        protected F7FeatherV2 _device => MeadowApp.Device;
 
         protected string _name;
 

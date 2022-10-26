@@ -12,7 +12,7 @@ namespace Impetuosity_Rover
 
         public MeadowApp()
         {
-            Console.WriteLine("meadow app started");
+            //Console.WriteLine("meadow app started");
             if (Init())
             {
 
@@ -25,10 +25,10 @@ namespace Impetuosity_Rover
 
             try
             {
-                Console.WriteLine("meadow app init started");
+                //Console.WriteLine("meadow app init started");
 
                 mainViewModel = new MainViewModel("MainViewModel");
-                Console.WriteLine("mainViewModel constructor completed, about to start MainViewModel Init");
+                //Console.WriteLine("mainViewModel constructor completed, about to start MainViewModel Init");
                 mainViewModel.Init();
 
                 result = true;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Impetuosity_Rover.Models
+namespace Impetuous.Models
 {
     public class PrimaryControlMessageModel : MessageBaseModel
     {

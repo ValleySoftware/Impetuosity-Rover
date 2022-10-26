@@ -23,8 +23,8 @@ namespace Impetuosity_Rover.ViewModels.Movement
             ref ServoConfig servoConfig,
             double alignmentModifier = 0,
             bool isReversed = false,
-            float minDegrees = 10,
-            float maxDegrees = 170,
+            float minDegrees = 0,
+            float maxDegrees = 180,
             float centreAngle = 90,
             float defaultAngle = 90)
         {

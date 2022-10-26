@@ -1,4 +1,4 @@
-﻿using Impetuosity_Rover.Models;
+﻿using Impetuous.Models;
 using Impetuosity_Rover.ViewModels.Primary;
 using Meadow;
 using Meadow.Devices;
@@ -76,7 +76,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
         }
 
-        public void Init(ref Pca9685 pca, TestMethodology requestedTesting = TestMethodology.none)
+        public void Init(ref Pca9685 pca, TestMethodology requestedTesting = TestMethodology.simple)
         {
             mainViewModel.MasterStatus.MovementStatus = ComponentStatus.Initialising;
             mainViewModel.MasterStatus.ShowDebugMessage(this, "Prepare Servo Conf");
@@ -84,22 +84,13 @@ namespace Impetuosity_Rover.ViewModels.Movement
             _pca = pca;
 
             
-            ServoConfig S50 = new ServoConfig(
-            new Meadow.Units.Angle(0), 
-            new Meadow.Units.Angle(180), 
-            //750,
-            1000,
-            //2500,
-            2000, 
-            60);
 
             ServoConfig SG51Conf = new ServoConfig
             (
                 minimumAngle: new Meadow.Units.Angle(0, Meadow.Units.Angle.UnitType.Degrees),
                 maximumAngle: new Meadow.Units.Angle(180, Meadow.Units.Angle.UnitType.Degrees),
-                minimumPulseDuration: 1000,
-                //maximumPulseDuration : 2750,
-                maximumPulseDuration: 2500,
+                minimumPulseDuration: 750,
+                maximumPulseDuration: 2250,
                 frequency: 60
             ); //Some experimenting done here to get rotation kinda close...
 
@@ -116,10 +107,10 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 _bogies.Add(rightRearBogie);
 
                 mainViewModel.MasterStatus.ShowDebugMessage(this, "Init Bogies", ErrorLoggingThreshold.important);
-                leftFrontBogie.Init(ref _pca, 1, ref SG51Conf, -35);
-                leftRearBogie.Init(ref _pca, 0, ref SG51Conf, -35, true);
-                rightFrontBogie.Init(ref _pca, 15, ref SG51Conf, -35);
-                rightRearBogie.Init(ref _pca, 14, ref SG51Conf, -20, true);
+                leftFrontBogie.Init(ref _pca, 1, ref SG51Conf, 0);
+                leftRearBogie.Init(ref _pca, 0, ref SG51Conf, 0, true);
+                rightFrontBogie.Init(ref _pca, 15, ref SG51Conf, 0);
+                rightRearBogie.Init(ref _pca, 14, ref SG51Conf, 0, true);
             }
             catch (Exception exb)
             {

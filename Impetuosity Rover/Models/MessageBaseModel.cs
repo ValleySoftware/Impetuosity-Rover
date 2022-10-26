@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using static Impetuous.Enumerations.Enumerations;
 
-namespace Impetuosity_Rover.Models
+namespace Impetuous.Models
 {
     public class MessageBaseModel
     {       

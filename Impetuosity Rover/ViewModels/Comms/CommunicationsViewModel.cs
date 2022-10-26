@@ -4,14 +4,13 @@ using System;
 using static Impetuous.Enumerations.Enumerations;
 using Meadow.Gateway.WiFi;
 using System.Threading.Tasks;
-using Impetuosity_Rover.Models;
+using Impetuous.Models;
 using Meadow.Foundation;
 using System.Net;
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
 using Impetuosity_Rover.ViewModels.Primary;
-using Impetuous.Models;
 
 namespace Impetuosity_Rover.ViewModels.Comms
 {
@@ -76,19 +75,18 @@ namespace Impetuosity_Rover.ViewModels.Comms
 
             return success;
         }
-    }
 
-    public class WebMotorRequestHandler : RequestHandlerBase
-    {
-        public WebMotorRequestHandler()
+        public class WebLightsRequestHandler : RequestHandlerBase
         {
-            Console.WriteLine("WebMotorRequestHandler constructor called.");
+            public WebLightsRequestHandler()
+        {
+            //Console.WriteLine("WebMotorRequestHandler constructor called.");
         }
 
-        [HttpPost("/motorcontrol")]
-        public IActionResult MotorControl()
+            [HttpPost("/lightcontrol")]
+            public IActionResult LightControl()
         {
-            Console.WriteLine("MapleWebMotorControlEndpointActivated.");
+            Console.WriteLine("MapleLightControlEndpointActivated.");
             IActionResult result = null;
 
             string bodyText;
@@ -96,7 +94,79 @@ namespace Impetuosity_Rover.ViewModels.Comms
             if (Context.Request.HasEntityBody)
             {
                 bodyText = ReadBodyFromStream(Context.Request);
-                Console.WriteLine($"Body is {bodyText} ");
+                //Console.WriteLine($"Body is {bodyText} ");
+
+                try
+                {
+                    var model = new LightMessageModel();
+                    SSJSONStringToObject(bodyText, model);
+
+                    if (model != null)
+                    {
+                        model.OriginalMessageString = bodyText;
+                        MeadowApp.Current.mainViewModel.messages.Add(model);
+                        model.RequestReceivedStamp = DateTimeOffset.Now;
+                        model.RequestStatus = MessageStatus.receivedPendingAction;
+
+                        result = RequestSetLights(ref model);
+                    }
+                }
+                catch (Exception deserializeEx)
+                {
+                    //Console.WriteLine("movement request deserialization error " + deserializeEx.Message, true);
+                    result = new StatusCodeResult(valleyMapleError_ParseError);
+                }
+            }
+            else
+            {
+                return new StatusCodeResult(valleyMapleError_UnknownError);
+            }
+
+            return result;
+        }
+
+            private IActionResult RequestSetLights(ref LightMessageModel request)
+        {
+            try
+            {
+                if (MeadowApp.Current.mainViewModel.Lights.SetLight(ref request))
+                {
+                    return new OkResult();
+                }
+                else
+                {
+                    return new StatusCodeResult(valleyMapleError_ActionError);
+                }
+
+            }
+            catch (Exception parseException)
+            {
+                Console.WriteLine("light request error " + parseException.Message, true);
+                return new StatusCodeResult(valleyMapleError_ParseError);
+            }
+
+        }
+        }
+
+        public class WebMotorRequestHandler : RequestHandlerBase
+        {
+            public WebMotorRequestHandler()
+            {
+                //Console.WriteLine("WebMotorRequestHandler constructor called.");
+            }
+
+            [HttpPost("/motorcontrol")]
+            public IActionResult MotorControl()
+        {
+            //Console.WriteLine("MapleWebMotorControlEndpointActivated.");
+            IActionResult result = null;
+
+            string bodyText;
+
+            if (Context.Request.HasEntityBody)
+            {
+                bodyText = ReadBodyFromStream(Context.Request);
+                //Console.WriteLine($"Body is {bodyText} ");
 
                 try
                 {
@@ -115,7 +185,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                 }
                 catch (Exception deserializeEx)
                 {
-                    Console.WriteLine("movement request deserialization error " + deserializeEx.Message, true);
+                    //Console.WriteLine("movement request deserialization error " + deserializeEx.Message, true);
                     result = new StatusCodeResult(valleyMapleError_ParseError);
                 }
             }
@@ -129,7 +199,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
             return result;
         }
 
-        private IActionResult RequestSetMotorPower(ref MovementMessageModel request)
+            private IActionResult RequestSetMotorPower(ref MovementMessageModel request)
         {
             try
             {
@@ -150,18 +220,19 @@ namespace Impetuosity_Rover.ViewModels.Comms
             }
 
         }
+        }
 
         public class WebSteeringRequestHandler : RequestHandlerBase
         {
             public WebSteeringRequestHandler()
             {
-                Console.WriteLine("WebSteeringRequestHandler constructor called.");
+                //Console.WriteLine("WebSteeringRequestHandler constructor called.");
             }
 
             [HttpPost("/steeringcontrol")]
             public IActionResult SteeringControl()
             {
-                Console.WriteLine("MapleWebSteeringControlEndpointActivated.");
+                //Console.WriteLine("MapleWebSteeringControlEndpointActivated.");
                 IActionResult result = null;
 
                 string bodyText;
@@ -169,7 +240,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                 if (Context.Request.HasEntityBody)
                 {
                     bodyText = ReadBodyFromStream(Context.Request);
-                    Console.WriteLine($"Body is {bodyText} ");
+                    //Console.WriteLine($"Body is {bodyText} ");
 
                     try
                     {
@@ -188,7 +259,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                     }
                     catch (Exception deserializeEx)
                     {
-                        Console.WriteLine("steering request deserialization error " + deserializeEx.Message, true);
+                        //Console.WriteLine("steering request deserialization error " + deserializeEx.Message, true);
                         result = new StatusCodeResult(valleyMapleError_ParseError);
                     }
                 }
@@ -218,7 +289,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                 }
                 catch (Exception parseException)
                 {
-                    Console.WriteLine("steering request error " + parseException.Message, true);
+                    //Console.WriteLine("steering request error " + parseException.Message, true);
                     return new StatusCodeResult(valleyMapleError_ParseError);
                 }
 
@@ -230,13 +301,13 @@ namespace Impetuosity_Rover.ViewModels.Comms
         {
             public WebPanTiltRequestHandler()
             {
-                Console.WriteLine("WebPanTiltRequestHandler constructor called.");
+                //Console.WriteLine("WebPanTiltRequestHandler constructor called.");
             }
 
             [HttpPost("/pantiltcontrol")]
             public IActionResult MotorControl()
             {
-                Console.WriteLine("MapleWebPanTiltRequestHandlerEndpointActivated.");
+                //Console.WriteLine("MapleWebPanTiltRequestHandlerEndpointActivated.");
                 IActionResult result = null;
 
                 string bodyText;
@@ -244,7 +315,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                 if (Context.Request.HasEntityBody)
                 {
                     bodyText = ReadBodyFromStream(Context.Request);
-                    Console.WriteLine($"Body is {bodyText} ");
+                    //Console.WriteLine($"Body is {bodyText} ");
 
                     try
                     {
@@ -263,7 +334,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                     }
                     catch (Exception deserializeEx)
                     {
-                        Console.WriteLine("steering request deserialization error " + deserializeEx.Message, true);
+                        //Console.WriteLine("steering request deserialization error " + deserializeEx.Message, true);
                         result = new StatusCodeResult(valleyMapleError_ParseError);
                     }
                 }
@@ -292,7 +363,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                 }
                 catch (Exception parseException)
                 {
-                    Console.WriteLine("pantilt request error " + parseException.Message, true);
+                    //Console.WriteLine("pantilt request error " + parseException.Message, true);
                     return new StatusCodeResult(valleyMapleError_ParseError);
                 }
 
@@ -405,12 +476,12 @@ namespace Impetuosity_Rover.ViewModels.Comms
         {
             Type objType = destinationObject.GetType();
 
-            Console.WriteLine($"JSONStringToKeyValuePairs: object is identified as {objType}");
+            //Console.WriteLine($"JSONStringToKeyValuePairs: object is identified as {objType}");
             //var destinationObject = anonDestinationObject as anonDestinationObject.GetType();
 
             if (destinationObject == null)
             {
-                Console.WriteLine($"JSONStringToKeyValuePairs error, destinationObject is null.  Exiting.");
+                //Console.WriteLine($"JSONStringToKeyValuePairs error, destinationObject is null.  Exiting.");
                 return null;
             }
 
@@ -419,18 +490,18 @@ namespace Impetuosity_Rover.ViewModels.Comms
             {
                 try
                 {
-                    Console.WriteLine(keyValuePair.Key);
+                   // Console.WriteLine(keyValuePair.Key);
 
                     //Find the matching property in the destination object by Json object key (name)
                     var destinationObjectProperty = objType.GetProperty(keyValuePair.Key);
 
                     if (destinationObjectProperty == null)
                     {
-                        Console.WriteLine($"object property {keyValuePair.Key} is a UNMATCHED with value {keyValuePair.Value}");
+                        //Console.WriteLine($"object property {keyValuePair.Key} is a UNMATCHED with value {keyValuePair.Value}");
                     }
                     else
                     {
-                        Console.WriteLine($"object property {keyValuePair.Key} is a {destinationObjectProperty.PropertyType} with value {keyValuePair.Value}");
+                        //Console.WriteLine($"object property {keyValuePair.Key} is a {destinationObjectProperty.PropertyType} with value {keyValuePair.Value}");
                     }
 
                     if (destinationObjectProperty != null &&
@@ -521,9 +592,16 @@ namespace Impetuosity_Rover.ViewModels.Comms
                             identified = true;
                         }
 
+                        if (!identified &&
+                            destinationObjectProperty.PropertyType == typeof(LightSelect))
+                        {
+                            destinationObjectProperty.SetValue(destinationObject, Convert.ToInt32(keyValuePair.Value.ToString()), null);
+                            identified = true;
+                        }
+
                         if (!identified)
                         {
-                            Console.WriteLine($"JSON Object Convert {keyValuePair.Key} is UNIDENTIFIED with value {keyValuePair.Value}");
+                            //Console.WriteLine($"JSON Object Convert {keyValuePair.Key} is UNIDENTIFIED with value {keyValuePair.Value}");
                         }
 
                     }

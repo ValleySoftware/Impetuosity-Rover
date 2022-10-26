@@ -7,20 +7,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using static Impetuous.Enumerations.Enumerations;
 
 namespace Impetuosity_Rover.ViewModels.Misc
 {
     public class DebugLogObject
     {
-        public DebugLogObject(string message, string senderName, DateTimeOffset stamp)
+        public DebugLogObject(string message, string senderName, DateTimeOffset stamp, bool shown = false)
         {
             Message = message;
             SenderName = senderName;
             Stamp = stamp;
+            Shown = shown;
         }
 
         public string Message { get; set; }
+        public bool Shown { get; set; }
         public string SenderName { get; set; }
         public DateTimeOffset Stamp { get; set; }
     }
@@ -31,6 +34,7 @@ namespace Impetuosity_Rover.ViewModels.Misc
 
         private Timer debugLogTimer;
         private bool debugQueueScanActive = false;
+        private bool scanStatusWithTimer = true;
         private List<DebugLogObject> debugQueue = new List<DebugLogObject>();
 
         private List<ComponentStatus> statusObjects;
@@ -73,22 +77,22 @@ namespace Impetuosity_Rover.ViewModels.Misc
                 }
 
                 ShowDebugMessage(this, "LED ready.");
-                
-                AutoResetEvent autoResetEvent = new AutoResetEvent(true);
-                debugLogTimer = new Timer(
-                    new TimerCallback(ScanDebugQueueForNewMessages),
-                    autoResetEvent,
-                    TimeSpan.FromSeconds(10),
-                    TimeSpan.FromSeconds(1));
 
-                ShowDebugMessage(this, "debug log timer ready.");
+                    AutoResetEvent autoResetEvent = new AutoResetEvent(true);
+                    debugLogTimer = new Timer(
+                        new TimerCallback(ScanDebugQueueForNewMessages),
+                        autoResetEvent,
+                        TimeSpan.FromSeconds(10),
+                        TimeSpan.FromSeconds(1));
+
+                    ShowDebugMessage(this, "debug log timer ready.");
 
                 onboardLed.SetColor(Color.Blue);
             }
             catch (Exception e)
             {
                 onboardLed.SetColor(Color.Red);
-                Console.WriteLine("Status Init error: " + e.Message);
+                //Console.WriteLine("Status Init error: " + e.Message);
             }
         }
 
@@ -147,7 +151,10 @@ namespace Impetuosity_Rover.ViewModels.Misc
         {
             if (messageCategory <= debugThreshhold)
             {
-                Console.WriteLine("SDM: " + messageToShow);
+                if (debugThreshhold == ErrorLoggingThreshold.debug)
+                {
+                    Console.WriteLine("SDM: " + messageToShow);
+                }
 
                 debugQueue.Add(new DebugLogObject(messageToShow, sender.Name, DateTimeOffset.Now));
             }
@@ -164,33 +171,36 @@ namespace Impetuosity_Rover.ViewModels.Misc
 
             try
             {
-
-                if (debugQueue.Count > 0)
+                if (mainViewModel.Display != null &&
+                    mainViewModel.Display.IsReady)
                 {
-                    var transientArray = new DebugLogObject[debugQueue.Count];
-                    debugQueue.CopyTo(transientArray);
-                    debugQueue.Clear();
-                    var transientList = transientArray.OrderBy(o => o.Stamp);
-                        
-                    DebugLogObject lastObjectInList = null;
-
-                    foreach (var element in transientList)
+                    if (debugQueue.Count > 0)
                     {
-                        Console.WriteLine(element.Message);
-                        lastObjectInList = element;
-                    }
+                        var transientArray = new DebugLogObject[debugQueue.Count];
+                        debugQueue.CopyTo(transientArray);
+                        debugQueue.Clear();
+                        var transientList = transientArray.OrderBy(o => o.Stamp);
 
-                    if (mainViewModel.Display != null &&
-                        mainViewModel.Display.IsReady)
-                    {
-                        mainViewModel.Display.ShowMessage(
-                            new List<string>() { lastObjectInList.Message });
+                        int msgNo = 1;
+                        foreach (var element in transientList)
+                        {
+                            //Console.WriteLine(element.Message);
+                            mainViewModel.Display.ShowMessage(new List<string>() { transientArray.Count() + "/" + msgNo, element.Message });
+                            Thread.Sleep(TimeSpan.FromSeconds(1));
+                            msgNo++;
+                        }
+
+                        if (scanStatusWithTimer)
+                        {
+                            RefreshGlobalStatus("PeriodicScan");
+
+                        }
                     }
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine("statusViewModelScanError: " + e.Message);
+                //Console.WriteLine("statusViewModelScanError: " + e.Message);
             }
             finally
             {                

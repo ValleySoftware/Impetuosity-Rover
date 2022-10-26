@@ -76,5 +76,12 @@ namespace Impetuous.Enumerations
             Orange,
             Red
         }
+
+        public enum LightSelect
+        {
+            panTilt,
+            headlight,
+            flood
+        }
     }
 }

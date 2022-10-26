@@ -28,8 +28,8 @@ namespace Impetuosity_Rover.ViewModels.Movement
             _pca = pca;
             _pan = new BaseServoViewModel("Pan");
             _tilt = new BaseServoViewModel("Tilt");
-            _pan.Init(ref pca, 4, ref Meadow.Foundation.Servos.NamedServoConfigs.SG90, 0, false, 10, 170, 90, 170); //Larger = left
-            _tilt.Init(ref pca, 5, ref Meadow.Foundation.Servos.NamedServoConfigs.SG90, 0, false, 10, 170, 90, 45); // Smaller number = down
+            _pan.Init(ref pca, 4, ref Meadow.Foundation.Servos.NamedServoConfigs.SG90, 0, true, 0, 180, 90, 170); //Larger = left
+            _tilt.Init(ref pca, 5, ref Meadow.Foundation.Servos.NamedServoConfigs.SG90, 0, false, 0, 180, 90, 45); // Smaller number = down
 
             //_pan.CentreBogie();
             //_tilt.CentreBogie();
@@ -70,11 +70,11 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
             try
             {
-                Console.WriteLine($"msg Body (a) is {request.OriginalMessageString} ");
+                //Console.WriteLine($"msg Body (a) is {request.OriginalMessageString} ");
 
-                Console.WriteLine(request.RequestType.ToString());
-                Console.WriteLine(request.RequestValue.ToString());
-                Console.WriteLine(request.PanOrTilt.ToString());
+                //Console.WriteLine(request.RequestType.ToString());
+                //Console.WriteLine(request.RequestValue.ToString());
+                //Console.WriteLine(request.PanOrTilt.ToString());
 
                 mainViewModel.MasterStatus.ShowDebugMessage(this, 
                     $"{request.RequestType} - " +
@@ -84,13 +84,13 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
                 if (request.PanOrTilt == PanTiltSelect.Pan)
                 {
-                    Console.WriteLine("pan", true);
+                    //Console.WriteLine("pan", true);
                     PanTo(request.RequestValue);
                     return true;
                 }
                 else
                 {
-                    Console.WriteLine("tilt", true);
+                    //Console.WriteLine("tilt", true);
                     TiltTo(request.RequestValue);
                     return true;
                 }

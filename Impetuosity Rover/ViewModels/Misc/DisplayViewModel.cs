@@ -30,17 +30,23 @@ namespace Impetuosity_Rover.ViewModels.Misc
                     displayType: Ssd130xBase.DisplayType.OLED128x64);
 
                 graphics = new MicroGraphics(display);
-                graphics.Clear();
-                graphics.Show();
+                ClearDisplay();
 
                 IsReady = true;
                 mainViewModel.MasterStatus.DisplayStatus = ComponentStatus.Ready;
+                ShowMessage(new List<string>() { "Display Ready" });
             }
             catch (Exception e)
             {
                 Console.WriteLine("display Init error: " + e.Message);
 
             }
+        }
+
+        public void ClearDisplay()
+        {
+            graphics.Clear();
+            graphics.Show();
         }
 
         public void ShowMessage(List<string> lines)

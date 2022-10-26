@@ -1,4 +1,4 @@
-﻿using Impetuosity_Rover.Models;
+﻿using Impetuous.Models;
 using Impetuosity_Rover.ViewModels.Comms;
 using Impetuosity_Rover.ViewModels.Misc;
 using Impetuosity_Rover.ViewModels.Movement;
@@ -39,7 +39,7 @@ namespace Impetuosity_Rover.ViewModels.Primary
 
         public MainViewModel(string name) : base(name)
         {
-            Console.WriteLine("mainViewModel constructor started");
+            //Console.WriteLine("mainViewModel constructor started");
 
             _masterStatus = new StatusViewModel("Master Status View Model");
             _masterStatus.Init();
@@ -47,7 +47,7 @@ namespace Impetuosity_Rover.ViewModels.Primary
 
         public void Init()
         {
-            Console.WriteLine("mainViewModel Init started");
+           //Console.WriteLine("mainViewModel Init started");
 
             List<Task> startupTasks = new List<Task>();
 
@@ -115,6 +115,9 @@ namespace Impetuosity_Rover.ViewModels.Primary
                 });
 
                 movementStartupTask.Start();
+
+                movementStartupTask.Wait();
+
                 MasterStatus.CoreComponentsStatus = ComponentStatus.Ready;
                 MasterStatus.RefreshGlobalStatus("MainViewModel init complete");
 
@@ -128,6 +131,11 @@ namespace Impetuosity_Rover.ViewModels.Primary
 
                 MasterStatus.RefreshGlobalStatus("MainViewModel init error");
             }
+        }
+
+        public LightsViewModel Lights
+        {
+            get => _lights;
         }
 
         public StatusViewModel MasterStatus

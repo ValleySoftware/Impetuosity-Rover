@@ -115,7 +115,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 _position = value;
                 //}
 
-                RotateToPosition();
+                RotateToPosition(true);
             }
         }
 
@@ -176,7 +176,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
                                 incrementalAngle = incrementalAngle + step;
                             }
 
-                            Console.WriteLine(_name + " Slow Rotation step " + incrementalAngle);
+                            //Console.WriteLine(_name + " Slow Rotation step " + incrementalAngle);
                             _servo.RotateTo(new Meadow.Units.Angle(incrementalAngle, Meadow.Units.Angle.UnitType.Degrees));
 
                             Task.Delay(TimeSpan.FromMilliseconds(500));
