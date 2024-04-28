@@ -111,7 +111,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                         result = RequestSetLights(ref model);
                     }
                 }
-                catch (Exception deserializeEx)
+                catch (Exception )
                 {
                     //Console.WriteLine("movement request deserialization error " + deserializeEx.Message, true);
                     result = new StatusCodeResult(valleyMapleError_ParseError);
@@ -183,7 +183,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                         result = RequestSetMotorPower(ref model);
                     }
                 }
-                catch (Exception deserializeEx)
+                catch (Exception )
                 {
                     //Console.WriteLine("movement request deserialization error " + deserializeEx.Message, true);
                     result = new StatusCodeResult(valleyMapleError_ParseError);
@@ -257,7 +257,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                             result = RequestChangeSteering(ref model);
                         }
                     }
-                    catch (Exception deserializeEx)
+                    catch (Exception )
                     {
                         //Console.WriteLine("steering request deserialization error " + deserializeEx.Message, true);
                         result = new StatusCodeResult(valleyMapleError_ParseError);
@@ -287,7 +287,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                     }
 
                 }
-                catch (Exception parseException)
+                catch (Exception )
                 {
                     //Console.WriteLine("steering request error " + parseException.Message, true);
                     return new StatusCodeResult(valleyMapleError_ParseError);
@@ -332,7 +332,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                             result = RequestPanTilt(ref model);
                         }
                     }
-                    catch (Exception deserializeEx)
+                    catch (Exception )
                     {
                         //Console.WriteLine("steering request deserialization error " + deserializeEx.Message, true);
                         result = new StatusCodeResult(valleyMapleError_ParseError);
@@ -361,7 +361,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                     }
 
                 }
-                catch (Exception parseException)
+                catch (Exception )
                 {
                     //Console.WriteLine("pantilt request error " + parseException.Message, true);
                     return new StatusCodeResult(valleyMapleError_ParseError);
@@ -454,7 +454,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
                                     parts[buildListLoop + 1]);
                             result.Add(element);
                         }
-                        catch (Exception e)
+                        catch (Exception)
                         {
 
                         }
@@ -464,7 +464,7 @@ namespace Impetuosity_Rover.ViewModels.Comms
 
                     return result;
                 }
-                catch (Exception ex)
+                catch (Exception )
                 {
                     return null;
                 }

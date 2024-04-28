@@ -40,18 +40,6 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 defaultAngle);
         }
 
-        public void Test()
-        {
-            Position = 10;
-            Thread.Sleep(TimeSpan.FromMilliseconds(250));
-            CentreBogie();
-            Thread.Sleep(TimeSpan.FromMilliseconds(250));
-            Position = 170;
-            Thread.Sleep(TimeSpan.FromMilliseconds(250));
-            CentreBogie();
-            Thread.Sleep(TimeSpan.FromMilliseconds(250));
-        }
-
 
     }
 }

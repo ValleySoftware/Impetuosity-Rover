@@ -77,7 +77,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
                 result = true;
             }
-            catch (Exception ex)
+            catch (Exception )
             {
                 result = false;
             }

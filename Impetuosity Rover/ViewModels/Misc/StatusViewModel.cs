@@ -89,7 +89,7 @@ namespace Impetuosity_Rover.ViewModels.Misc
 
                 onboardLed.SetColor(Color.Blue);
             }
-            catch (Exception e)
+            catch (Exception )
             {
                 onboardLed.SetColor(Color.Red);
                 //Console.WriteLine("Status Init error: " + e.Message);
@@ -198,7 +198,7 @@ namespace Impetuosity_Rover.ViewModels.Misc
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception )
             {
                 //Console.WriteLine("statusViewModelScanError: " + e.Message);
             }

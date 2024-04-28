@@ -57,7 +57,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
                 IsReady = true;
 
-                RotateToPosition();
+                RotateToPosition(true);
 
                 return true;
             }
@@ -115,11 +115,11 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 _position = value;
                 //}
 
-                RotateToPosition(true);
+                RotateToPosition(false);
             }
         }
 
-        private void RotateToPosition(bool fastMove = true)
+        private void RotateToPosition(bool fastMove)
         {
             if (!IsReady)
             {
@@ -149,7 +149,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
                     else
                     {
                         mainViewModel.MasterStatus.ShowDebugMessage(this,
-                            _name + " attempting slow rotation to " + Position,
+                            _name + " slow rotate to " + Position,
                             ErrorLoggingThreshold.important);
 
                         double incrementalAngle = Position;

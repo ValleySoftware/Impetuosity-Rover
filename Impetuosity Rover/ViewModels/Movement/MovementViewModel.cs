@@ -68,7 +68,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
                     parts[i] = parts[i].Trim();
                 }
             }
-            catch (Exception ex)
+            catch (Exception )
             {
 
             }
@@ -396,7 +396,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 }
 
             }
-            catch (Exception ex)
+            catch (Exception )
             {
 
             }
@@ -433,7 +433,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 result = true;
 
             }
-            catch (Exception ex)
+            catch (Exception )
             {
 
             }
@@ -460,7 +460,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 }
 
             }
-            catch (Exception ex)
+            catch (Exception )
             {
 
             }
@@ -506,7 +506,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
                 result = true;
             }
-            catch (Exception ex)
+            catch (Exception )
             {
 
             }
@@ -531,7 +531,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
 
                 result = ServoSimpleTest();
             }
-            catch (Exception ex)
+            catch (Exception )
             {
 
             }
@@ -594,7 +594,7 @@ namespace Impetuosity_Rover.ViewModels.Movement
                 }
 
             }
-            catch (Exception ex)
+            catch (Exception )
             {
                 result = false;
             }

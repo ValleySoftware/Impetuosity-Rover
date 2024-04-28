@@ -60,7 +60,7 @@ namespace Impetuosity_Rover.ViewModels.Misc
                 }
                 mainViewModel.MasterStatus.ShowDebugMessage(this, Convert.ToInt32(model.Light).ToString() + " requested " + model.NewState, ErrorLoggingThreshold.important);
             }
-            catch (Exception e)
+            catch (Exception )
             {
                 result = false;
             }
